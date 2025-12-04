@@ -12,7 +12,6 @@ use crate::components::{
     },
     global::args::MatmulArgs,
 };
-use cubecl::prelude::*;
 
 /// Executes matrix multiplication at the batch level,
 /// assigning each cube to handle multiple global matmuls.

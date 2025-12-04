@@ -15,7 +15,6 @@ use crate::components::{
         plane_vec_mat_inner_product::{reader::MatrixFragmentReader, writer::MatrixStageWriter},
     },
 };
-use cubecl::prelude::*;
 
 /// Uses one unit to perform a small matmul directly in registers
 pub struct PlaneVecMatInnerProduct<Acc: TileKind> {

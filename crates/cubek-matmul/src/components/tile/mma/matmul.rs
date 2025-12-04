@@ -9,7 +9,6 @@ use crate::components::tile::{
     mma::{reader::MmaStageReader, writer::MmaStageWriter},
 };
 use crate::components::tile::{mma::reader::MmaFragmentReader, tile_data::StridedTile};
-use cubecl::prelude::*;
 use cubecl::{cmma::MmaDefinition, ir::MatrixIdent};
 
 /// Uses one plane to perform a small matmul using accelerated instructions, with manual register

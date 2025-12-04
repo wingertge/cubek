@@ -10,8 +10,8 @@ use crate::components::tile::{
 };
 use crate::components::tile::{cmma::writer::CmmaStageWriter, tile_data::StridedTile};
 use crate::components::{MatrixLayout, as_cmma_layout};
+use cubecl::cmma;
 use cubecl::std::CubeOption;
-use cubecl::{cmma, prelude::*};
 
 /// Uses one plane to perform a small matmul using accelerated instructions.
 pub struct CmmaMatmul<Acc: TileKind = Filled> {
