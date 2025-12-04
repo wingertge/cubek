@@ -1,6 +1,5 @@
-use cubecl_core as cubecl;
-use cubecl_core::prelude::*;
-use cubecl_std::tensor::r#virtual::VirtualTensor;
+use cubecl::prelude::*;
+use cubecl::std::tensor::r#virtual::VirtualTensor;
 
 use crate::BoundChecksInner;
 use crate::args::ReduceArgs;

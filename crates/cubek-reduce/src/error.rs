@@ -1,4 +1,4 @@
-use cubecl_core::{ir::StorageType, server::LaunchError};
+use cubecl::{ir::StorageType, server::LaunchError};
 use thiserror::Error;
 
 #[derive(Error, Debug, Clone)]

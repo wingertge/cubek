@@ -1,5 +1,4 @@
-use cubecl_core::prelude::*;
-use cubecl_runtime::Plane;
+use cubecl::{features::Plane, prelude::*};
 use serde::{Deserialize, Serialize};
 
 use crate::ReduceError;

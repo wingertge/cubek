@@ -1,5 +1,5 @@
-use cubecl_core::{prelude::*, tensor_line_size_parallel, tensor_line_size_perpendicular};
-use cubecl_std::tensor::is_contiguous;
+use cubecl::std::tensor::is_contiguous;
+use cubecl::{prelude::*, tensor_line_size_parallel, tensor_line_size_perpendicular};
 
 use crate::ReduceStrategy;
 

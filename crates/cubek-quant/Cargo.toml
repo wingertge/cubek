@@ -12,7 +12,6 @@ version.workspace = true
 
 [features]
 default = ["kernels"]
-export_tests = []
 kernels = ["std"]
 std = ["cubecl/std"]
 

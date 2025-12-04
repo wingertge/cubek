@@ -1,4 +1,4 @@
-use cubecl_core::{flex32, prelude::Numeric};
+use cubecl::{flex32, prelude::Numeric};
 
 /// Precision used for the reduction.
 pub trait ReducePrecision {

@@ -1,7 +1,6 @@
-use cubecl_core::ir::ElemType;
-use cubecl_core::prelude::*;
-use cubecl_core::{self as cubecl};
-use cubecl_runtime::TypeUsage;
+use cubecl::features::TypeUsage;
+use cubecl::ir::ElemType;
+use cubecl::prelude::*;
 
 use crate::ReduceError;
 

@@ -4,10 +4,10 @@ use super::{
 };
 use crate::ReduceDtypes;
 use crate::precision::ReducePrecision;
-use cubecl_core::ir::{FloatKind, IntKind, UIntKind};
-use cubecl_core::prelude::*;
-use cubecl_core::{self as cubecl, ir::ElemType};
-use cubecl_std::{CubeOption, CubeOptionExpand};
+use cubecl::ir::ElemType;
+use cubecl::ir::{FloatKind, IntKind, UIntKind};
+use cubecl::prelude::*;
+use cubecl::std::{CubeOption, CubeOptionExpand};
 
 #[derive(Debug, CubeType, Clone)]
 pub enum ReduceFn {

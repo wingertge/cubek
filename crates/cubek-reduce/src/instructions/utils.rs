@@ -1,5 +1,4 @@
-use cubecl_core as cubecl;
-use cubecl_core::prelude::*;
+use cubecl::prelude::*;
 
 // Using plane operations, return the lowest coordinate for each line element
 // for which the item equal the target.

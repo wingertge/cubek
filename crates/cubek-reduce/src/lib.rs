@@ -35,13 +35,7 @@ use launch::*;
 pub use args::init_tensors;
 pub use launch::{ReduceDtypes, ReduceParams, reduce_kernel, reduce_kernel_virtual};
 
-#[cfg(feature = "export_tests")]
-pub mod test;
-
-#[cfg(feature = "export_tests")]
-pub mod test_shuffle;
-
-use cubecl_core::prelude::*;
+use cubecl::prelude::*;
 
 /// Reduce the given `axis` of the `input` tensor using the instruction `Inst` and write the result into `output`.
 ///

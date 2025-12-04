@@ -4,7 +4,7 @@
 # https://doc.rust-lang.org/cargo/reference/resolver.html#feature-resolver-version-2
 resolver = "2"
 
-members = ["crates/cubek-random", "crates/cubek-quant"]
+members = ["crates/cubek-random", "crates/cubek-quant", "crates/cubek-reduce"]
 
 [workspace.package]
 edition = "2024"
