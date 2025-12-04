@@ -1,7 +1,7 @@
 use cubecl::TestRuntime;
 use cubecl::prelude::*;
 use cubek_reduce::{
-    ReduceDtypes, ReduceError, ReducePrecision, ReduceStrategy, instructions::*, reduce, shared_sum,
+    ReduceDtypes, ReduceError, ReducePrecision, ReduceStrategy, instructions::*, reduce,
 };
 use rand::{
     SeedableRng,
@@ -175,15 +175,6 @@ impl TestCase {
         expected
     }
 
-    pub fn test_shared_sum(&self) {
-        let input_values: Vec<TestDType> = self.random_input_values();
-        let mut expected = TestDType::from_int(0);
-        for v in input_values.iter() {
-            expected += *v;
-        }
-        self.run_shared_sum_test(input_values, expected);
-    }
-
     pub fn run_reduce_test<O, K>(
         &self,
         input_values: Vec<<TestDType as ReducePrecision>::EI>,
@@ -246,42 +237,6 @@ impl TestCase {
         let bytes = client.read_one(output_handle);
         let output_values = O::from_bytes(&bytes);
         assert_approx_equal(output_values, &expected_values);
-    }
-
-    pub fn run_shared_sum_test(&self, input_values: Vec<TestDType>, expected: TestDType) {
-        let client = TestRuntime::client(&Default::default());
-
-        let input_handle = client.create_from_slice(TestDType::as_bytes(&input_values));
-        let output_handle =
-            client.create_from_slice(TestDType::as_bytes(&[TestDType::from_int(0)]));
-
-        let input = unsafe {
-            TensorHandleRef::from_raw_parts(
-                &input_handle,
-                &self.stride,
-                &self.shape,
-                size_of::<TestDType>(),
-            )
-        };
-        let output = unsafe {
-            TensorHandleRef::from_raw_parts(&output_handle, &[1], &[1], size_of::<TestDType>())
-        };
-
-        let cube_count = 3;
-        let result = shared_sum(
-            &client,
-            input,
-            output,
-            cube_count,
-            TestDType::as_type_native_unchecked().elem_type(),
-        );
-
-        if result.is_err() {
-            return; // don't execute the test in that case since atomic adds are not supported.
-        }
-        let bytes = client.read_one(output_handle);
-        let actual = TestDType::from_bytes(&bytes);
-        assert_approx_equal(actual, &[expected]);
     }
 
     fn num_output_values(&self) -> usize {
