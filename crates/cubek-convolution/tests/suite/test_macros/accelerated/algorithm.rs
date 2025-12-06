@@ -2,7 +2,7 @@
 macro_rules! testgen_convolution_accelerated_algorithm {
     () => {
         use cubek_convolution::kernels::layered::{
-            simple::SimpleConvAlgorithm,
+            simple::{SimpleConvAlgorithm, SimpleTmaConvAlgorithm},
         };
         use cubek_convolution::components::global::read::strategy::{
             async_full_cyclic,
@@ -67,6 +67,13 @@ macro_rules! testgen_convolution_accelerated_algorithm {
                 async_full_strided::AsyncFullStridedLoading,
                 async_full_strided::AsyncFullStridedLoading
             >);
+        }
+
+        #[cfg(all(feature = "conv_tests_simple", feature="conv_tests_tma"))]
+        mod simple_tma {
+            use super::*;
+
+            $crate::testgen_convolution_accelerated_precision!(SimpleTmaConvAlgorithm<TMM>);
         }
     };
 }

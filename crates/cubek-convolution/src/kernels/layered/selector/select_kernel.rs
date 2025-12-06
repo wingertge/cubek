@@ -1,4 +1,4 @@
-use crate::components::ConvGemmConfig as _;
+use crate::components::{ConvGemmConfig as _, global::args::RuntimeArgsLaunch};
 use cubecl::prelude::TensorHandleRef;
 use cubecl::{Runtime, client::ComputeClient};
 use cubek_matmul::components::MatmulElems;
@@ -42,7 +42,7 @@ where
 {
     let config = A::setup(client, &problem, &selection, &line_sizes, dtypes)?;
 
-    let input = <InputArg<A::Args> as ConcreteInputsFactory>::create(
+    let (input, runtime_args) = <InputArg<A::Args> as ConcreteInputsFactory>::create(
         client,
         input,
         weight,
@@ -70,7 +70,7 @@ where
             A::cube_count(&selection, &problem),
             input,
             output,
-            &problem,
+            runtime_args,
             config,
             dtypes,
         )
@@ -83,10 +83,12 @@ where
 }
 
 /// Select which kernel to launch for the given Algorithm.
+#[allow(clippy::too_many_arguments)]
 pub fn launch_kernel_virtual<'a, MA: MatmulArgs, R: Runtime, A: Algorithm>(
     client: &ComputeClient<R>,
     input: InputRuntimeArg<'a, MA, R>,
     output: OutputRuntimeArg<'a, MA, R>,
+    runtime_args: RuntimeArgsLaunch<'a, R>,
     problem: ConvolutionProblem,
     line_sizes: MatmulLineSizes,
     selection: MatmulSelection,
@@ -101,7 +103,7 @@ pub fn launch_kernel_virtual<'a, MA: MatmulArgs, R: Runtime, A: Algorithm>(
             A::cube_count(&selection, &problem),
             input,
             output,
-            &problem,
+            runtime_args,
             config,
             dtypes,
         )

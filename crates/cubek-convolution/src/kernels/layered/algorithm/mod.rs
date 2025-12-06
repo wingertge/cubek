@@ -15,9 +15,7 @@ use crate::components::{
     global::{GlobalConfig, GlobalConvolutionFamily},
 };
 
-pub mod multi_stage_tma;
 pub mod simple;
-pub mod simple_tma;
 
 /// Specifications for a convolution algorithm
 pub trait Algorithm {

@@ -5,7 +5,9 @@ use cubecl::std::{
 };
 use cubecl::{Runtime, client::ComputeClient, ir::StorageType, prelude::TensorHandleRef};
 use cubek_matmul::components::{
-    MatmulElems, MatmulLineSizes, MatmulSelection, MatmulSetupError, stage::StridedStageFamily,
+    MatmulElems, MatmulLineSizes, MatmulSelection, MatmulSetupError,
+    global::{args::TensorMapArgs, read::async_full_tma::AsyncFullTmaLoading},
+    stage::StridedStageFamily,
     tile::io::Strided,
 };
 use cubek_matmul::components::{
@@ -34,6 +36,10 @@ pub struct SimpleConvAlgorithm<
 > {
     _tmm: PhantomData<TMM>,
     _loader: PhantomData<(LL, LR)>,
+}
+
+pub struct SimpleTmaConvAlgorithm<TMM: TileMatmulFamily> {
+    _tmm: PhantomData<TMM>,
 }
 
 impl<
@@ -97,4 +103,55 @@ fn has_valid_layout<R: Runtime>(handle: &TensorHandleRef<'_, R>) -> bool {
     let rank = handle.shape.len();
     let dim_c = rank - 1;
     handle.strides[dim_c] == 1
+}
+
+impl<
+    TMM: TileMatmulFamily<
+            LhsTile = Strided,
+            RhsTile = Strided,
+            AccTile = CubeOption<Strided>,
+            OutTile = Strided,
+        >,
+> Algorithm for SimpleTmaConvAlgorithm<TMM>
+{
+    type TileMatmul = TMM;
+    type StageMatmul = PlaneMatmulFamily<
+        Self::TileMatmul,
+        StridedStageFamily,
+        StridedStageFamily,
+        Option<StridedStageFamily>,
+    >;
+    type GlobalConvolution =
+        SimpleConvolutionFamily<Self::StageMatmul, AsyncFullTmaLoading, AsyncFullTmaLoading>;
+
+    type Args = TensorMapArgs;
+
+    fn into_tensor_handle<R: Runtime>(
+        client: &ComputeClient<R>,
+        handle: &TensorHandleRef<'_, R>,
+        dtype: StorageType,
+    ) -> Result<TensorHandle<R>, LaunchError> {
+        if has_valid_layout(handle) {
+            Ok(TensorHandle::from_ref(handle, dtype))
+        } else {
+            into_contiguous_pitched(client, handle, dtype)
+        }
+    }
+
+    // TODO this is not the same as tma stages, it's stages in the sense of double buffering in matmul
+    fn num_stages() -> NumStages {
+        (1, 1).into()
+    }
+
+    fn selection<R: Runtime>(
+        client: &ComputeClient<R>,
+        problem: &ConvolutionProblem,
+        plane_dim: u32,
+        line_sizes: &MatmulLineSizes,
+        dtypes: &mut MatmulElems,
+    ) -> Result<MatmulSelection, MatmulSetupError> {
+        Ok(convolution_matmul_selection::<TMM, R>(
+            client, problem, plane_dim, false, line_sizes, dtypes,
+        )?)
+    }
 }

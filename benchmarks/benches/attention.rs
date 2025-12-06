@@ -1,6 +1,8 @@
+#![allow(unused, clippy::extra_unused_type_parameters)]
+
 use cubecl::{
     Runtime,
-    benchmark::{Benchmark, ProfileDuration, TimingMethod},
+    benchmark::{Benchmark, ProfileDuration},
     client::ComputeClient,
     future,
     prelude::*,
@@ -11,7 +13,7 @@ use cubek::{
         self as attention, Strategy,
         components::{
             AttentionElems, AttentionIdent, AttentionPrecision, AttentionProblem,
-            AttentionProblemDims,
+            AttentionStorageTypes,
             attention_types::{KG, MSK, OG, QG, VG},
         },
     },
@@ -83,14 +85,20 @@ impl<R: Runtime, AP: AttentionPrecision> Benchmark for AttentionBench<R, AP> {
         );
 
         attention::launch_ref(
-            &Strategy::BlackboxAccelerated,
+            &Strategy::BlackboxAccelerated(Default::default()),
             &self.client,
             &input.query.as_ref(),
             &input.key.as_ref(),
             &input.value.as_ref(),
             &None,
             &out.as_ref(),
-            &dtypes,
+            AttentionStorageTypes {
+                query: dtypes.query_global,
+                key: dtypes.key_global,
+                value: dtypes.value_global,
+                mask: dtypes.mask,
+                out: dtypes.out_global,
+            },
         )
         .map_err(|it| format!("{it:?}"))
     }
