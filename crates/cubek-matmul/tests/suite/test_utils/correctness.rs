@@ -2,35 +2,38 @@ use std::any::TypeId;
 use std::fmt::Display;
 
 use cubecl::TestRuntime;
+use cubecl::prelude::Numeric;
 use cubecl::{CubeElement, client::ComputeClient, prelude::Float, server};
 
-use crate::suite::test_utils::cpu_reference::matmul_cpu_reference;
-use crate::suite::{TestEA, TestEG, TestES};
+use crate::suite::test_utils::cpu_reference::{CastInto, matmul_cpu_reference};
 use cubek_matmul::components::MatmulProblem;
 
-pub fn assert_result(
-    lhs: &[TestEG],
-    rhs: &[TestEG],
+pub fn assert_result<
+    EG: Float + CubeElement + Display + CastInto<ES>,
+    ES: Numeric + CastInto<EA>,
+    EA: Numeric + CastInto<EG>,
+>(
+    lhs: &[EG],
+    rhs: &[EG],
     problem: &MatmulProblem,
     client: &ComputeClient<TestRuntime>,
     out: server::Handle,
     shape: &[usize],
     strides: &[usize],
 ) {
-    let eps_global = epsilon_for_type::<TestEG>();
-    let eps_stage = epsilon_for_type::<TestES>();
-    let eps_acc = epsilon_for_type::<TestEA>();
+    let eps_global = epsilon_for_type::<EG>();
+    let eps_stage = epsilon_for_type::<ES>();
+    let eps_acc = epsilon_for_type::<EA>();
 
     // Empirically chosen for metal
     let safety_factor = 170.0;
     let epsilon = (eps_global.max(eps_stage).max(eps_acc)) * safety_factor;
 
-    let expected = matmul_cpu_reference::<TestEG, TestES, TestEA>(lhs, rhs, problem)
+    let expected = matmul_cpu_reference::<EG, ES, EA>(lhs, rhs, problem)
         .into_iter()
-        .collect::<Vec<TestEG>>();
+        .collect::<Vec<EG>>();
 
-    if let Err(e) = assert_equals_approx::<TestEG>(client, out, shape, strides, &expected, epsilon)
-    {
+    if let Err(e) = assert_equals_approx::<EG>(client, out, shape, strides, &expected, epsilon) {
         panic!("{}", e);
     }
 }

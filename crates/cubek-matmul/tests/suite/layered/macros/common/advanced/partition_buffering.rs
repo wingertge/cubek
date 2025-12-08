@@ -1,38 +1,47 @@
-#[macro_export]
-macro_rules! testgen_matmul_partition_buffering {
-    ($kind: ident, $algorithm: ty, $precision: ty, $selection_builder: expr) => {
-        use cubek_matmul::components::stage::PartitionBuffering;
+// #[macro_export]
+// macro_rules! testgen_matmul_partition_buffering {
+//     ($kind: ident, $algorithm: ty, $precision: ty, $selection_builder: expr) => {
 
-        #[cfg(not(feature = "matmul_tests_partition_buffering"))]
-        $crate::testgen_matmul_problem!(
-            $kind,
-            $algorithm,
-            $precision,
-            $selection_builder.partition_buffering(PartitionBuffering::Single)
-        );
+#[cfg(not(feature = "matmul_tests_partition_buffering"))]
+pub mod no_partition_buffering {
+    use super::*;
+    use cubek_matmul::components::stage::PartitionBuffering;
 
-        #[cfg(feature = "matmul_tests_partition_buffering")]
-        mod pb1 {
-            use super::*;
+    fn partition_buffering() -> PartitionBuffering {
+        PartitionBuffering::Single
+    }
 
-            $crate::testgen_matmul_problem!(
-                $kind,
-                $algorithm,
-                $precision,
-                $selection_builder.partition_buffering(PartitionBuffering::Single)
-            );
-        }
-
-        #[cfg(feature = "matmul_tests_partition_buffering")]
-        mod pb2 {
-            use super::*;
-
-            $crate::testgen_matmul_problem!(
-                $kind,
-                $algorithm,
-                $precision,
-                $selection_builder.partition_buffering(PartitionBuffering::Double)
-            );
-        }
-    };
+    include!("../problem/layouts.rs");
 }
+// $crate::testgen_matmul_problem!(
+//     $kind,
+//     $algorithm,
+//     $precision,
+//     $selection_builder.partition_buffering(PartitionBuffering::Single)
+// );
+
+// #[cfg(feature = "matmul_tests_partition_buffering")]
+// mod pb1 {
+//     use super::*;
+
+//     $crate::testgen_matmul_problem!(
+//         $kind,
+//         $algorithm,
+//         $precision,
+//         $selection_builder.partition_buffering(PartitionBuffering::Single)
+//     );
+// }
+
+// #[cfg(feature = "matmul_tests_partition_buffering")]
+// mod pb2 {
+//     use super::*;
+
+//     $crate::testgen_matmul_problem!(
+//         $kind,
+//         $algorithm,
+//         $precision,
+//         $selection_builder.partition_buffering(PartitionBuffering::Double)
+//     );
+// }
+//     };
+// }

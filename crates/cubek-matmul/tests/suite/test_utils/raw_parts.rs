@@ -1,13 +1,21 @@
-use crate::suite::layered::matmul_test_launcher::tensor_size;
 use crate::suite::test_utils::sample::Sample;
-use cubecl::{TestRuntime, prelude::*};
+use crate::suite::test_utils::{tensor_size, transpose};
+use cubecl::{TestRuntime, prelude::*, server};
 use cubecl::{
     client::ComputeClient,
     server::{Allocation, AllocationDescriptor},
 };
 use cubek_matmul::components::{MatmulIdent, MatmulProblem, MatrixLayout};
 
-use crate::suite::layered::matmul_test_launcher::{TensorRawParts, transpose};
+#[derive(Debug)]
+pub struct TensorRawParts<E: CubeElement> {
+    pub handle: server::Handle,
+    #[allow(unused)] //TODO: Fix
+    pub scale: Option<server::Handle>,
+    pub shape: Vec<usize>,
+    pub strides: Vec<usize>,
+    pub original_data: Option<Vec<E>>,
+}
 
 pub(crate) fn tensor_raw_parts<E: CubeElement + Numeric + Sample>(
     client: &ComputeClient<TestRuntime>,

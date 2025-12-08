@@ -1,7 +1,7 @@
 use cubecl::{flex32, prelude::Numeric, tf32};
 use cubek_matmul::components::{MatmulIdent, MatmulProblem};
 
-use crate::suite::layered::matmul_test_launcher::strides;
+use crate::suite::test_utils::strides;
 
 pub trait CastInto<E> {
     fn cast_into(self) -> E;

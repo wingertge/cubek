@@ -1,4 +1,3 @@
-use crate::suite::TestEG;
 use crate::suite::test_utils::{assert_result, tensor_raw_parts};
 use cubecl::Runtime;
 use cubecl::frontend::CubePrimitive;
@@ -142,7 +141,7 @@ fn test_naive(case: MatmulTestCase) {
     )
     .unwrap();
 
-    assert_result(
+    assert_result::<TestEG, TestEG, TestEG>(
         &lhs.original_data.unwrap(),
         &rhs.original_data.unwrap(),
         &problem,
