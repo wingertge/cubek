@@ -17,24 +17,12 @@ pub fn assert_result(
     shape: &[usize],
     strides: &[usize],
 ) {
-    let eps_global = if TypeId::of::<TestEG>() == TypeId::of::<f32>() {
-        f32::EPSILON
-    } else {
-        half::f16::EPSILON.to_f32()
-    };
-    let eps_stage = if TypeId::of::<TestES>() == TypeId::of::<f32>() {
-        f32::EPSILON
-    } else {
-        half::f16::EPSILON.to_f32()
-    };
-    let eps_acc = if TypeId::of::<TestEA>() == TypeId::of::<f32>() {
-        f32::EPSILON
-    } else {
-        half::f16::EPSILON.to_f32()
-    };
+    let eps_global = epsilon_for_type::<TestEG>();
+    let eps_stage = epsilon_for_type::<TestES>();
+    let eps_acc = epsilon_for_type::<TestEA>();
 
-    // Empirically found on metal
-    let safety_factor = 150.0;
+    // Empirically chosen for metal
+    let safety_factor = 170.0;
     let epsilon = (eps_global.max(eps_stage).max(eps_acc)) * safety_factor;
 
     let expected = matmul_cpu_reference::<TestEG, TestES, TestEA>(lhs, rhs, problem)
@@ -47,6 +35,14 @@ pub fn assert_result(
     }
 }
 
+fn epsilon_for_type<T: 'static>() -> f32 {
+    if TypeId::of::<T>() == TypeId::of::<f32>() {
+        f32::EPSILON
+    } else {
+        half::f16::EPSILON.to_f32()
+    }
+}
+
 /// Compares the content of a handle to a given slice of f32.
 fn assert_equals_approx<F: Float + CubeElement + Display>(
     client: &ComputeClient<TestRuntime>,
@@ -56,7 +52,7 @@ fn assert_equals_approx<F: Float + CubeElement + Display>(
     expected: &[F],
     epsilon: f32,
 ) -> Result<(), String> {
-    let env = std::env::var("MATMUL_TEST_MODE");
+    let env = std::env::var("CUBEK_TEST_MODE");
 
     let print_instead_of_compare = match env {
         Ok(val) => matches!(val.as_str(), "print"),

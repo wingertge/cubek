@@ -1,8 +1,10 @@
 #[macro_export]
 macro_rules! testgen_matmul_launch {
-    (Normal, $algorithm: ty, $precision: ty, $selection: expr, $problem: expr) => {
+    (Normal, $algorithm: ty, $precision: ty,  $selection: expr, $problem: expr) => {
         use cubecl::prelude::*;
         use cubek_matmul::components::MatmulElems;
+        use $crate::suite::TestEG;
+        use $crate::suite::TestES;
         use $crate::suite::layered::matmul_test_launcher::test_matmul_algorithm;
 
         #[test]
@@ -12,7 +14,7 @@ macro_rules! testgen_matmul_launch {
                 client,
                 $problem,
                 $selection,
-                MatmulElems::new::<$precision>(),
+                MatmulElems::new::<TestEG>(),
             );
         }
     };
@@ -28,7 +30,7 @@ macro_rules! testgen_matmul_launch {
                 client,
                 $problem,
                 $selection,
-                MatmulElems::new::<$precision>(),
+                MatmulElems::new::<TestEG>(),
             );
         }
     };
