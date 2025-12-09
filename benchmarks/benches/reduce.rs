@@ -6,7 +6,7 @@ use cubecl::{
 };
 use cubek::{
     random::random_uniform,
-    reduce::instructions::{ReduceFn, ReduceFnConfig},
+    reduce::{components::instructions::ReduceOperationConfig, launch::ReduceStrategy},
 };
 use std::marker::PhantomData;
 
@@ -37,13 +37,16 @@ impl<R: Runtime, E: Float> Benchmark for ReduceBench<R, E> {
     }
 
     fn execute(&self, (input, out): Self::Input) -> Result<(), String> {
-        cubek::reduce::reduce::<R, ReduceFn>(
+        cubek::reduce::reduce::<R>(
             &self.client,
             input.as_ref(),
             out.as_ref(),
             self.axis,
-            None,
-            ReduceFnConfig::Sum,
+            Some(ReduceStrategy {
+                use_planes: false,
+                shared: false,
+            }),
+            ReduceOperationConfig::Sum,
             cubek::reduce::ReduceDtypes {
                 input: E::as_type_native_unchecked(),
                 output: E::as_type_native_unchecked(),
@@ -73,7 +76,7 @@ impl<R: Runtime, E: Float> Benchmark for ReduceBench<R, E> {
 #[allow(dead_code)]
 fn run<R: Runtime, E: frontend::Float>(device: R::Device) {
     let client = R::client(&device);
-    for axis in [0, 1, 2] {
+    for axis in [2] {
         let bench = ReduceBench::<R, E> {
             shape: vec![32, 512, 2048],
             axis,

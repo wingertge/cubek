@@ -10,32 +10,26 @@
 //! It also provides implementation of the [`ReduceInstruction`] trait for common operations in the [`instructions`] module.
 //! Finally, it provides many reusable primitives to perform different general reduction algorithms in the [`primitives`] module.
 
-pub mod args;
-pub mod instructions;
-pub mod primitives;
-pub mod tune_key;
+pub mod components;
+pub mod launch;
+pub mod routines;
 
-mod config;
 mod error;
-mod launch;
-mod precision;
-mod shared_sum;
-mod strategy;
 
-pub use config::*;
-pub use error::*;
-pub use instructions::ReduceFamily;
-pub use instructions::ReduceInstruction;
-pub use precision::ReducePrecision;
-pub use shared_sum::*;
-pub use strategy::*;
-
-use launch::*;
-
-pub use args::init_tensors;
-pub use launch::{ReduceDtypes, ReduceParams, reduce_kernel, reduce_kernel_virtual};
-
+use crate::{
+    components::instructions::ReduceOperationConfig,
+    launch::{ReduceLaunchInfo, ReduceStrategy, launch_reduce},
+};
+pub use components::{
+    args::init_tensors,
+    config::*,
+    instructions::{ReduceFamily, ReduceInstruction},
+    precision::ReducePrecision,
+};
 use cubecl::prelude::*;
+pub use error::*;
+pub use launch::{ReduceDtypes, reduce_kernel};
+pub use routines::shared_sum::shared_sum;
 
 /// Reduce the given `axis` of the `input` tensor using the instruction `Inst` and write the result into `output`.
 ///
@@ -90,13 +84,13 @@ use cubecl::prelude::*;
 ///        println!("Output = {:?}", output_values); // Should print [1, 5].
 /// }
 /// ```
-pub fn reduce<R: Runtime, Inst: ReduceFamily>(
+pub fn reduce<R: Runtime>(
     client: &ComputeClient<R>,
     input: TensorHandleRef<R>,
     output: TensorHandleRef<R>,
     axis: usize,
     strategy: Option<ReduceStrategy>,
-    inst_config: Inst::Config,
+    operation: ReduceOperationConfig,
     dtypes: ReduceDtypes,
 ) -> Result<(), ReduceError> {
     validate_axis(input.shape.len(), axis)?;
@@ -104,7 +98,7 @@ pub fn reduce<R: Runtime, Inst: ReduceFamily>(
     let strategy = strategy
         .map(|s| s.validate(client))
         .unwrap_or(Ok(ReduceStrategy::new(client, true)))?;
-    let config = ReduceConfig::generate(client, &input, &output, axis, &strategy, dtypes.input);
+    let config = ReduceLaunchInfo::generate(client, &input, &output, axis, &strategy, dtypes.input);
 
     if let CubeCount::Static(x, y, z) = config.cube_count {
         let (max_x, max_y, max_z) = R::max_cube_count();
@@ -113,7 +107,7 @@ pub fn reduce<R: Runtime, Inst: ReduceFamily>(
         }
     }
 
-    let result = launch_reduce::<R, Inst>(
+    let result = launch_reduce::<R>(
         client,
         input,
         output,
@@ -121,7 +115,7 @@ pub fn reduce<R: Runtime, Inst: ReduceFamily>(
         config,
         strategy,
         dtypes,
-        inst_config,
+        operation,
     );
 
     match result {

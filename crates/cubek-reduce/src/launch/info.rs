@@ -1,34 +1,14 @@
-use cubecl::std::tensor::is_contiguous;
-use cubecl::{prelude::*, tensor_line_size_parallel, tensor_line_size_perpendicular};
-
-use crate::ReduceStrategy;
+use crate::{BoundChecksInner, LineMode, launch::ReduceStrategy};
+use cubecl::{
+    prelude::*, std::tensor::is_contiguous, tensor_line_size_parallel,
+    tensor_line_size_perpendicular,
+};
 
 // TODO: Should we allows the user to change that?
 const DEFAULT_PLANE_COUNT: u32 = 8;
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
-pub enum LineMode {
-    Parallel,
-    Perpendicular,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
-/// How bound checks is handled for inner reductions.
-pub enum BoundChecksInner {
-    /// No bound check is necessary.
-    None,
-    /// Using a mask is enough for bound checks.
-    /// This will still read the memory in an out-of-bound location,
-    /// but will replace the value by the null value.
-    Mask,
-    /// Branching is necessary for bound checks.
-    ///
-    /// Probably the right setting when performing fuse on read.
-    Branch,
-}
-
 #[derive(Debug, Clone)]
-pub struct ReduceConfig {
+pub struct ReduceLaunchInfo {
     pub cube_count: CubeCount,
     pub cube_dim: CubeDim,
     pub line_mode: LineMode,
@@ -38,7 +18,7 @@ pub struct ReduceConfig {
     pub bound_checks_inner: BoundChecksInner,
 }
 
-impl ReduceConfig {
+impl ReduceLaunchInfo {
     pub(crate) fn generate<R: Runtime>(
         client: &ComputeClient<R>,
         input: &TensorHandleRef<R>,
@@ -46,9 +26,9 @@ impl ReduceConfig {
         axis: usize,
         strategy: &ReduceStrategy,
         dtype: StorageType,
-    ) -> ReduceConfig {
+    ) -> ReduceLaunchInfo {
         let reduce_count = output.size() as u32;
-        ReduceConfig::new()
+        ReduceLaunchInfo::new()
             .generate_line_mode(input, axis)
             .generate_line_size(client, input, output, axis, dtype)
             .generate_cube_dim(client, strategy.use_planes)
