@@ -25,12 +25,6 @@ impl PlaneReduceConfig {
     }
 }
 
-#[derive(CubeType)]
-struct Indexes {
-    worker_index: u32,
-    num_workers: u32,
-}
-
 /// Use an individual plane  to reduce the `items` with the specified range.
 /// That is, this will reduces `items[range.start]`, `items[range.start + range.step]`
 /// until `items[range.end]` (exclusive).
@@ -51,25 +45,22 @@ struct Indexes {
 pub fn reduce<P: ReducePrecision, I: List<Line<P::EI>>, R: ReduceInstruction<P>>(
     items: &I,
     inst: &R,
-    partition: ReducePartition,
+    range: ReducePartition,
     #[comptime] config: PlaneReduceConfig,
 ) -> R::AccumulatorItem {
-    let indexes = Indexes {
-        worker_index: CUBE_POS_X,
-        num_workers: CUBE_DIM_X,
-    };
+    let plane_dim = CUBE_DIM_X;
 
     let mut accumulator = R::null_accumulator(inst, config.line_size);
 
-    let mut first_index = partition.index_start;
+    let mut first_index = range.index_start;
     for first_coordinate in range_stepped(
-        partition.coordinate_start,
-        partition.coordinate_end,
-        partition.coordinate_step,
+        range.coordinate_start,
+        range.coordinate_end,
+        range.coordinate_step,
     ) {
         let unit_coordinate_offset = match config.line_mode {
-            LineMode::Parallel => indexes.worker_index * config.line_size,
-            LineMode::Perpendicular => indexes.worker_index,
+            LineMode::Parallel => UNIT_POS_X * config.line_size,
+            LineMode::Perpendicular => UNIT_POS_X,
         };
         let unit_coordinate = first_coordinate + unit_coordinate_offset;
 
@@ -84,11 +75,11 @@ pub fn reduce<P: ReducePrecision, I: List<Line<P::EI>>, R: ReduceInstruction<P>>
             ReduceCoordinate::new_NotRequired()
         };
 
-        let index = first_index + indexes.worker_index * partition.index_step;
+        let index = first_index + UNIT_POS_X * range.index_step;
         let item = match config.bound_checks {
             BoundChecksInner::None => items.read(index),
             BoundChecksInner::Mask => {
-                let mask = unit_coordinate < partition.coordinate_end;
+                let mask = unit_coordinate < range.coordinate_end;
                 let index = index * u32::cast_from(mask);
                 select(
                     mask,
@@ -97,7 +88,7 @@ pub fn reduce<P: ReducePrecision, I: List<Line<P::EI>>, R: ReduceInstruction<P>>
                 )
             }
             BoundChecksInner::Branch => {
-                if unit_coordinate < partition.coordinate_end {
+                if unit_coordinate < range.coordinate_end {
                     items.read(index)
                 } else {
                     R::null_input(inst, config.line_size)
@@ -107,7 +98,7 @@ pub fn reduce<P: ReducePrecision, I: List<Line<P::EI>>, R: ReduceInstruction<P>>
 
         reduce_inplace::<P, R>(inst, &mut accumulator, item, coordinates, true);
 
-        first_index += indexes.num_workers * partition.index_step;
+        first_index += plane_dim * range.index_step;
     }
     accumulator
 }

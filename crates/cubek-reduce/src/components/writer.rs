@@ -12,7 +12,7 @@ pub struct WriterConfig {
 }
 
 impl WriterConfig {
-    fn from_blueprint(blueprint: ReduceBlueprint) -> Self {
+    pub fn from_blueprint(blueprint: ReduceBlueprint) -> Self {
         match blueprint.kind {
             ReduceBlueprintKind::Unit => Self {
                 line_mode: blueprint.line_mode,
