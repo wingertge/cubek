@@ -21,18 +21,20 @@ pub fn reduce_kernel_virtual<In: Numeric, Out: Numeric, Acc: Numeric>(
 ) {
     let reduce_index = get_reduce_index(blueprint.kind);
 
-    // #[allow(clippy::collapsible_if)]
-    // if comptime![params.bound_checks] {
-    //     if reduce_index
-    //         >= get_reduce_count(
-    //             output.len() * output.line_size(),
-    //             params.line_mode,
-    //             input.line_size(),
-    //         )
-    //     {
-    //         terminate!();
-    //     }
-    // }
+    let config = comptime!(writer::WriterConfig::from_blueprint(blueprint));
+
+     #[allow(clippy::collapsible_if)]
+     if comptime![params.bound_checks] {
+         if reduce_index
+             >= get_reduce_count(
+                 output.len() * output.line_size(),
+                 params.line_mode,
+                 input.line_size(),
+             )
+         {
+             terminate!();
+         }
+     }
 
     reduce_kernel_inner::<(In, Acc), Out, ReduceOperation>(
         input,
