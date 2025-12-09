@@ -83,24 +83,19 @@ impl<R: Runtime, AP: AttentionPrecision> Benchmark for AttentionBench<R, AP> {
             self.problem.shape(AttentionIdent::Out).to_vec(),
             dtypes.out_global,
         );
+        todo!();
 
-        attention::launch_ref(
-            &Strategy::BlackboxAccelerated(Default::default()),
-            &self.client,
-            &input.query.as_ref(),
-            &input.key.as_ref(),
-            &input.value.as_ref(),
-            &None,
-            &out.as_ref(),
-            AttentionStorageTypes {
-                query: dtypes.query_global,
-                key: dtypes.key_global,
-                value: dtypes.value_global,
-                mask: dtypes.mask,
-                out: dtypes.out_global,
-            },
-        )
-        .map_err(|it| format!("{it:?}"))
+        // attention::launch_ref(
+        //     &Strategy::BlackboxAccelerated,
+        //     &self.client,
+        //     &input.query.as_ref(),
+        //     &input.key.as_ref(),
+        //     &input.value.as_ref(),
+        //     &None,
+        //     &out.as_ref(),
+        //     &dtypes,
+        // )
+        // .map_err(|it| format!("{it:?}"))
     }
 
     fn name(&self) -> String {
