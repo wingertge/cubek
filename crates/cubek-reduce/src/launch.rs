@@ -5,8 +5,8 @@ use crate::{
         config::BoundChecksInner,
         instructions::*,
         level::{self},
+        partition::ReducePartition,
         precision::ReducePrecision,
-        range::ReduceRange,
     },
 };
 use cubecl::prelude::*;
@@ -127,7 +127,8 @@ fn reduce_kernel_inner<P: ReducePrecision, Out: Numeric, R: ReduceFamily>(
     #[comptime] params: ReduceParams,
     #[comptime] config: R::Config,
 ) {
-    let range = ReduceRange::new::<P, Out>(reduce_index, input, output, axis_reduce, params);
+    let partition =
+        ReducePartition::new::<P, Out>(reduce_index, input, output, axis_reduce, params);
 
     let inst = &R::Instruction::<P>::from_config(config);
     let accumulator = match comptime!((params.shared, params.use_planes)) {
@@ -135,7 +136,7 @@ fn reduce_kernel_inner<P: ReducePrecision, Out: Numeric, R: ReduceFamily>(
             level::cube::reduce::<P, VirtualTensor<P::EI>, R::Instruction<P>>(
                 input,
                 inst,
-                range,
+                partition,
                 accumulator_size,
                 params.line_size_input,
                 params.line_mode,
@@ -146,14 +147,14 @@ fn reduce_kernel_inner<P: ReducePrecision, Out: Numeric, R: ReduceFamily>(
         (None, true) => level::plane::reduce::<P, VirtualTensor<P::EI>, R::Instruction<P>>(
             input,
             inst,
-            range,
+            partition,
             params.line_size_input,
             params.line_mode,
             params.bound_checks_inner,
         ),
         (None, false) => level::unit::reduce::<P, VirtualTensor<P::EI>, R::Instruction<P>>(
             input,
-            range,
+            partition,
             inst,
             params.line_size_input,
             params.line_mode,
