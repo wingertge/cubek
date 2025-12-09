@@ -1,9 +1,7 @@
-use cubecl::{features::Plane, prelude::*};
-use serde::{Deserialize, Serialize};
-
 use crate::ReduceError;
+use cubecl::{features::Plane, prelude::*};
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct ReduceStrategy {
     /// If true and the compute client support plane instructions,
     /// then try using them in the kernel. It could still be impossible to use

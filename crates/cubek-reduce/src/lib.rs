@@ -14,24 +14,22 @@ pub mod components;
 pub mod launch;
 pub mod routines;
 
-pub use routines::shared_sum::shared_sum;
-
 mod error;
-
-pub use components::args::init_tensors;
-pub use components::config::*;
-pub use components::instructions::ReduceFamily;
-pub use components::instructions::ReduceInstruction;
-pub use components::precision::ReducePrecision;
-pub use error::*;
-pub use launch::{ReduceDtypes, reduce_kernel};
-
-use cubecl::prelude::*;
 
 use crate::{
     components::instructions::ReduceOperationConfig,
     launch::{ReduceLaunchInfo, ReduceStrategy, launch_reduce},
 };
+pub use components::{
+    args::init_tensors,
+    config::*,
+    instructions::{ReduceFamily, ReduceInstruction},
+    precision::ReducePrecision,
+};
+use cubecl::prelude::*;
+pub use error::*;
+pub use launch::{ReduceDtypes, reduce_kernel};
+pub use routines::shared_sum::shared_sum;
 
 /// Reduce the given `axis` of the `input` tensor using the instruction `Inst` and write the result into `output`.
 ///
@@ -92,7 +90,7 @@ pub fn reduce<R: Runtime>(
     output: TensorHandleRef<R>,
     axis: usize,
     strategy: Option<ReduceStrategy>,
-    inst_config: ReduceOperationConfig,
+    operation: ReduceOperationConfig,
     dtypes: ReduceDtypes,
 ) -> Result<(), ReduceError> {
     validate_axis(input.shape.len(), axis)?;
@@ -117,7 +115,7 @@ pub fn reduce<R: Runtime>(
         config,
         strategy,
         dtypes,
-        inst_config,
+        operation,
     );
 
     match result {
