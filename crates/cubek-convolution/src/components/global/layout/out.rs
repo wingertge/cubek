@@ -106,6 +106,6 @@ impl<'a, R: Runtime> OutLayoutLaunch<'a, R> {
         let shape_m = ScalarArg::new(problem.m as u32);
         let shape_k = ScalarArg::new(problem.k as u32);
 
-        Self::new(shape_out, shape_m, shape_k, config)
+        Self::new(shape_out, shape_k, shape_m, config)
     }
 }

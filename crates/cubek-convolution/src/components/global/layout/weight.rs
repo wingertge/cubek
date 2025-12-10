@@ -127,6 +127,6 @@ impl<'a, R: Runtime> WeightLayoutLaunch<'a, R> {
 
         let params = ConvolutionParams::from_problem(problem);
 
-        WeightLayoutLaunch::new(padded_channels, shape_m, shape_n, params, config)
+        WeightLayoutLaunch::new(padded_channels, shape_n, shape_m, params, config)
     }
 }

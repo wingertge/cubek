@@ -87,7 +87,7 @@ impl<Lhs: Numeric, Rhs: Numeric, EO: Numeric> ConcreteInputsFactory for TensorIn
 
         let load_width = client.properties().hardware.load_width;
         let channel_align = load_width as usize / dtypes.lhs_global.size_bits();
-        let padded_channels = (problem.channels as u32).next_multiple_of(channel_align as u32);
+        let padded_channels = problem.channels as u32;
 
         let layout_nhwc = |handle, line_size, check_spatial| {
             NhwcLayoutLaunch::from_handle(
@@ -101,26 +101,22 @@ impl<Lhs: Numeric, Rhs: Numeric, EO: Numeric> ConcreteInputsFactory for TensorIn
         let layout_lhs = OutLayoutLaunch::from_args_backprop_weights(
             client,
             problem,
-            config.rhs_global_memory_config(),
+            config.lhs_global_memory_config(),
         );
         let layout_rhs = Im2colLayoutLaunch::from_args_backprop_weights(
             client,
             problem,
             padded_channels,
             config.convolution_params(),
-            config.lhs_global_memory_config(),
+            config.rhs_global_memory_config(),
         );
 
         let layout_lhs = {
-            let global = layout_nhwc(
-                out_grad.data(),
-                line_sizes.lhs,
-                config.check_spatial_bounds(),
-            );
+            let global = layout_nhwc(out_grad.data(), line_sizes.lhs, false);
             ChainLaunch::new(global, TransposeLaunch::new(layout_lhs))
         };
         let layout_rhs = {
-            let global = layout_nhwc(input.data(), line_sizes.rhs, false);
+            let global = layout_nhwc(input.data(), line_sizes.rhs, config.check_spatial_bounds());
             ChainLaunch::new(global, layout_rhs)
         };
 
@@ -153,11 +149,11 @@ impl<EG: Numeric> ConcreteOutputFactory for TensorOutput<EG> {
         config: impl ConvGemmConfig,
         dtypes: &MatmulElems,
     ) -> Self::RuntimeArg<'a, R> {
-        type Layout = Chain<NhwcLayout, WeightLayout>;
+        type Layout = Chain<NhwcLayout, Transpose<WeightLayout>>;
 
         let load_width = client.properties().hardware.load_width;
         let channel_align = load_width as usize / dtypes.lhs_global.size_bits();
-        let padded_channels = (problem.channels as u32).next_multiple_of(channel_align as u32);
+        let padded_channels = problem.channels as u32;
 
         let global = NhwcLayoutLaunch::from_handle(
             out,
@@ -171,7 +167,7 @@ impl<EG: Numeric> ConcreteOutputFactory for TensorOutput<EG> {
             padded_channels,
             config.rhs_global_memory_config(),
         );
-        let layout = ChainLaunch::new(global, layout);
+        let layout = ChainLaunch::new(global, TransposeLaunch::new(layout));
         let view = ViewArg::new::<Layout>(out.as_array_arg(line_sizes.out), layout);
         let batch = VirtualLayoutLaunch::new::<NoopLayout>(NoopLayoutLaunch::new());
         TensorOutputLaunch::new(view, batch)
