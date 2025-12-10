@@ -32,6 +32,7 @@ fn should_abort<T, E: Debug>(result: &Result<T, E>) -> bool {
     }
 }
 
+#[allow(unused)]
 pub fn attention_test_launch<A: Algorithm, P: TestPrecision, R: Runtime>(
     client: ComputeClient<R>,
     problem: AttentionProblem,

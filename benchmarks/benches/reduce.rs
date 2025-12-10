@@ -76,6 +76,7 @@ impl<R: Runtime, E: Float> Benchmark for ReduceBench<R, E> {
 #[allow(dead_code)]
 fn run<R: Runtime, E: frontend::Float>(device: R::Device) {
     let client = R::client(&device);
+    #[allow(clippy::single_element_loop)]
     for axis in [2] {
         let bench = ReduceBench::<R, E> {
             shape: vec![32, 512, 2048],

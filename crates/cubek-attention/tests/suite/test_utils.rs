@@ -39,6 +39,7 @@ pub trait TestPrecision {
         strides: &[usize],
     );
 
+    #[allow(unused)]
     fn to_global_dtypes() -> AttentionStorageTypes {
         let eg = Self::EG::as_type_native_unchecked();
         let em = Self::EM::as_type_native_unchecked();

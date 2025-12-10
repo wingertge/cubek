@@ -36,7 +36,7 @@ use crate::{
             single_stage::simple::SimpleConvolutionFamily,
         },
     },
-    kernels::layered::{into_tensor_handle, into_tensor_handle_tma},
+    kernels::forward::{into_tensor_handle, into_tensor_handle_tma},
 };
 
 use super::Algorithm;

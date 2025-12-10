@@ -1,11 +1,13 @@
-use crate::{components::ConvGemmConfig as _, kernels::layered::simple::*};
-use crate::{components::ConvSetupError, kernels::layered::selector::launch_kernel_concrete};
 use crate::{
-    components::{
-        ConvolutionProblem, Dimensionality,
-        global::args::{ConcreteInputsFactory, ConcreteOutputFactory},
-    },
-    kernels::layered::algorithm::Algorithm,
+    ConvolutionArgs, Strategy,
+    components::ConvGemmConfig as _,
+    forward::args::{ConcreteInputsFactory, ConcreteOutputFactory},
+    kernels::forward::simple::*,
+};
+use crate::{components::ConvSetupError, kernels::forward::selector::launch_kernel_concrete};
+use crate::{
+    components::{ConvolutionProblem, Dimensionality},
+    kernels::forward::algorithm::Algorithm,
 };
 use cubecl::{
     Runtime,
@@ -25,20 +27,6 @@ use cubek_matmul::{
     components::{InputArg, OutputArg},
 };
 use derive_new::new;
-
-#[derive(Clone)]
-pub struct ConvolutionArgs<const N_SPATIAL: usize> {
-    pub stride: [usize; N_SPATIAL],
-    pub padding: [usize; N_SPATIAL],
-    pub dilation: [usize; N_SPATIAL],
-}
-
-pub enum Strategy {
-    Simple {
-        read_strategy: ReadingStrategy,
-        tile_kind: AcceleratedTileKind,
-    },
-}
 
 macro_rules! with_tile_kind {
     ($kind: expr, $T: ident, $launch: expr) => {
