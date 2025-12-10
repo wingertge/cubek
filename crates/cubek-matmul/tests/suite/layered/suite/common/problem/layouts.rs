@@ -1,25 +1,10 @@
-#[cfg(all(
-    not(feature = "matmul_tests_layouts"),
-    not(feature = "matmul_tests_vecmat")
-))]
+#[cfg(all(not(feature = "matmul_tests_layouts"),))]
 pub mod default {
     use super::*;
     use cubek_matmul::components::MatrixLayout;
 
     pub fn layouts() -> (MatrixLayout, MatrixLayout) {
         (MatrixLayout::RowMajor, MatrixLayout::RowMajor)
-    }
-
-    include!("problem_size.rs");
-}
-
-#[cfg(all(not(feature = "matmul_tests_layouts"), feature = "matmul_tests_vecmat"))]
-pub mod default {
-    use super::*;
-    use cubek_matmul::components::MatrixLayout;
-
-    pub fn layouts() -> (MatrixLayout, MatrixLayout) {
-        (MatrixLayout::RowMajor, MatrixLayout::ColMajor)
     }
 
     include!("problem_size.rs");

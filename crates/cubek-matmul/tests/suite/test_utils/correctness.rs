@@ -1,9 +1,9 @@
-use std::fmt::Display;
-
 use cubecl::TestRuntime;
-use cubecl::{CubeElement, client::ComputeClient, prelude::Float, server};
+use cubecl::std::tensor::TensorHandle;
+use cubecl::{CubeElement, client::ComputeClient};
 
 use crate::suite::test_utils::cpu_reference::matmul_cpu_reference;
+use crate::suite::test_utils::new_casted;
 use cubek_matmul::components::{MatmulElems, MatmulProblem};
 
 pub fn assert_result(
@@ -11,9 +11,7 @@ pub fn assert_result(
     rhs: &[f32],
     problem: &MatmulProblem,
     client: &ComputeClient<TestRuntime>,
-    out: server::Handle,
-    shape: &[usize],
-    strides: &[usize],
+    out: &TensorHandle<TestRuntime>,
     dtypes: MatmulElems,
 ) {
     let epsilon = matmul_epsilon(&dtypes, 170.);
@@ -22,7 +20,7 @@ pub fn assert_result(
         .into_iter()
         .collect::<Vec<f32>>();
 
-    if let Err(e) = assert_equals_approx(client, out, shape, strides, &expected, epsilon) {
+    if let Err(e) = assert_equals_approx(client, out, &expected, epsilon) {
         panic!("{}", e);
     }
 }
@@ -42,12 +40,10 @@ fn matmul_epsilon(elems: &MatmulElems, safety_factor: f32) -> f32 {
 }
 
 /// Compares the content of a handle to a given slice of f32.
-fn assert_equals_approx<F: Float + CubeElement + Display>(
+fn assert_equals_approx(
     client: &ComputeClient<TestRuntime>,
-    output: server::Handle,
-    shape: &[usize],
-    strides: &[usize],
-    expected: &[F],
+    out: &TensorHandle<TestRuntime>,
+    expected: &[f32],
     epsilon: f32,
 ) -> Result<(), String> {
     let env = std::env::var("CUBEK_TEST_MODE");
@@ -57,21 +53,19 @@ fn assert_equals_approx<F: Float + CubeElement + Display>(
         Err(_) => false,
     };
 
-    let actual =
-        client.read_one_tensor(output.copy_descriptor(shape, strides, F::type_size() as usize));
-    let actual = F::from_bytes(&actual);
+    // Obtain the data in f32 for not being generic over type
+    let data_handle = new_casted(client, &out);
+    let data_f32 =
+        f32::from_bytes(&client.read_one_tensor(data_handle.as_copy_descriptor())).to_owned();
 
-    let epsilon = epsilon.max(F::EPSILON.to_f32().unwrap());
+    for (i, (a, e)) in data_f32.iter().zip(expected.iter()).enumerate() {
+        let allowed_error = (epsilon * e).max(epsilon);
 
-    for (i, (a, e)) in actual.iter().zip(expected.iter()).enumerate() {
-        let allowed_error = (epsilon * e.to_f32().unwrap()).max(epsilon);
-
-        // account for lower precision at higher values
         if print_instead_of_compare {
             println!("{:?}: {:?}, {:?}", i, a, e);
         } else {
-            let actual_nan = f32::is_nan(a.to_f32().unwrap());
-            let expected_nan = f32::is_nan(e.to_f32().unwrap());
+            let actual_nan = f32::is_nan(*a);
+            let expected_nan = f32::is_nan(*e);
 
             if actual_nan != expected_nan {
                 if expected_nan {
@@ -81,7 +75,7 @@ fn assert_equals_approx<F: Float + CubeElement + Display>(
                 }
             }
 
-            let difference = f32::abs(a.to_f32().unwrap() - e.to_f32().unwrap());
+            let difference = f32::abs(a - e);
 
             if difference >= allowed_error {
                 return Err(format!(

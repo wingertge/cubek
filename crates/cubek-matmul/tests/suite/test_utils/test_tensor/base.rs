@@ -1,9 +1,6 @@
+use cubecl::client::ComputeClient;
 use cubecl::std::tensor::TensorHandle;
 use cubecl::{TestRuntime, prelude::*};
-use cubecl::{
-    client::ComputeClient,
-    server::{Allocation, AllocationDescriptor},
-};
 use cubek_matmul::components::{MatmulIdent, MatmulProblem, MatrixLayout};
 use cubek_matmul::tune_key::MatmulElemType;
 
@@ -26,12 +23,14 @@ pub(crate) fn input_test_tensor(
     dtype: MatmulElemType,
     seed: u64,
     layout: MatrixLayout,
-    mut tensor_shape: Vec<usize>,
+    tensor_shape: Vec<usize>,
 ) -> (TensorHandle<TestRuntime>, Vec<f32>) {
     // Create buffer with random elements that will be used in test
     cubek_random::seed(seed);
     let dtype = dtype.dtype;
-    let tensor_handle = TensorHandle::empty(client, tensor_shape.to_vec(), dtype);
+    // Squash all dims because it's random and does not matter, this will make easier to reason for row/col major
+    let shape_for_random = vec![tensor_shape.iter().product()];
+    let tensor_handle = TensorHandle::empty(client, shape_for_random, dtype);
 
     cubek_random::random_uniform(
         &client,
@@ -47,42 +46,38 @@ pub(crate) fn input_test_tensor(
     let data_f32 =
         f32::from_bytes(&client.read_one_tensor(data_handle.as_copy_descriptor())).to_owned();
 
-    // // If col major we will rewrite the buffer in col major
-    // let rank = tensor_shape.len();
-    // let data = match layout {
-    //     MatrixLayout::RowMajor => original_data.clone(),
-    //     MatrixLayout::ColMajor => {
-    //         tensor_shape.swap(rank - 1, rank - 2);
-    //         transpose(
-    //             &original_data,
-    //             tensor_shape
-    //                 .iter()
-    //                 .take(tensor_shape.len().saturating_sub(2))
-    //                 .product(),
-    //             tensor_shape[rank - 1],
-    //             tensor_shape[rank - 2],
-    //         )
-    //     }
-    // };
-    // let descriptors = vec![(
-    //     AllocationDescriptor::optimized(tensor_shape.as_slice(), dtype.size()),
-    //     bytemuck::cast_slice(&data),
-    // )];
+    match layout {
+        MatrixLayout::RowMajor => (
+            TensorHandle::new_contiguous(tensor_shape, tensor_handle.handle, tensor_handle.dtype),
+            data_f32,
+        ),
+        MatrixLayout::ColMajor => {
+            let batch = tensor_shape[..tensor_shape.len() - 2].iter().product();
+            let rows = tensor_shape[tensor_shape.len() - 2];
+            let cols = tensor_shape[tensor_shape.len() - 1];
 
-    // let mut tensors = client.create_tensors_from_slices(descriptors);
-    // let Allocation {
-    //     handle,
-    //     mut strides,
-    // } = tensors.remove(0);
+            let mut strides = Vec::with_capacity(tensor_shape.len());
+            let mut current = 1;
+            tensor_shape.iter().enumerate().rev().for_each(|(_, val)| {
+                strides.push(current);
+                current *= val;
+            });
+            strides.reverse();
+            strides.swap(tensor_shape.len() - 1, tensor_shape.len() - 2);
 
-    // if matches!(layout, MatrixLayout::ColMajor) {
-    //     tensor_shape.swap(rank - 1, rank - 2);
-    //     strides.swap(rank - 1, rank - 2);
-    // }
+            let col_major_data = transpose(&data_f32, batch, rows, cols);
 
-    // let _offs = tensors.pop();
-
-    (tensor_handle, data_f32)
+            (
+                TensorHandle::new(
+                    tensor_handle.handle,
+                    tensor_shape,
+                    strides,
+                    tensor_handle.dtype,
+                ),
+                col_major_data,
+            )
+        }
+    }
 }
 
 fn transpose(array: &[f32], batches: usize, rows: usize, cols: usize) -> Vec<f32> {

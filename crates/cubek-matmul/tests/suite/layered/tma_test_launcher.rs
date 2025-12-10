@@ -156,14 +156,5 @@ pub fn test_tma_matmul_algorithm<A: Algorithm>(
         Err(_err) => return,
     }
 
-    assert_result(
-        &lhs_data,
-        &rhs_data,
-        &problem,
-        &client,
-        out.handle,
-        &out.shape,
-        &out.strides,
-        dtypes,
-    );
+    assert_result(&lhs_data, &rhs_data, &problem, &client, &out, dtypes);
 }

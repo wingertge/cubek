@@ -1,6 +1,7 @@
 use cubecl::TestRuntime;
 use cubecl::prelude::*;
 
+use crate::suite::test_utils::new_eyed;
 use crate::suite::test_utils::output_test_tensor;
 use crate::suite::test_utils::{assert_result, input_test_tensor};
 use cubek_matmul::components::global::args::ConcreteInputsFactory;
@@ -38,6 +39,8 @@ pub fn test_matmul_algorithm<A: Algorithm>(
         Err(_) => false,
     };
 
+    println!("{:?}", problem);
+
     let (lhs, lhs_data) = input_test_tensor(
         &client,
         dtypes.lhs_global,
@@ -45,6 +48,23 @@ pub fn test_matmul_algorithm<A: Algorithm>(
         problem.lhs_layout,
         problem.shape(MatmulIdent::Lhs),
     );
+
+    // let lhs = new_eyed(&client, problem.shape(MatmulIdent::Lhs), *dtypes.lhs_global);
+    // let lhs_data: Vec<f32> = {
+    //     let batch = problem.lhs_batches.iter().product();
+    //     let rows = problem.m;
+    //     let cols = problem.k;
+    //     let mut v = vec![0.0; batch * rows * cols];
+    //     for b in 0..batch {
+    //         let offset = b * rows * cols;
+    //         let n = rows.min(cols);
+    //         for i in 0..n {
+    //             v[offset + i * cols + i] = 1.0;
+    //         }
+    //     }
+    //     v
+    // };
+
     let (rhs, rhs_data) = input_test_tensor(
         &client,
         dtypes.rhs_global,
@@ -163,14 +183,5 @@ pub fn test_matmul_algorithm<A: Algorithm>(
         Err(_err) => return,
     }
 
-    assert_result(
-        &lhs_data,
-        &rhs_data,
-        &problem,
-        &client,
-        out.handle,
-        &out.shape,
-        &out.strides,
-        dtypes,
-    );
+    assert_result(&lhs_data, &rhs_data, &problem, &client, &out, dtypes);
 }
