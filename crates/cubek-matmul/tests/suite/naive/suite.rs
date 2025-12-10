@@ -119,22 +119,6 @@ fn test_naive(case: MatmulTestCase) {
         problem.shape(MatmulIdent::Lhs),
     );
 
-    // let lhs = new_eyed(&client, problem.shape(MatmulIdent::Lhs), *dtype);
-    // let lhs_data: Vec<f32> = {
-    //     let batch = problem.lhs_batches.iter().product();
-    //     let rows = problem.m;
-    //     let cols = problem.k;
-    //     let mut v = vec![0.0; batch * rows * cols];
-    //     for b in 0..batch {
-    //         let offset = b * rows * cols;
-    //         let n = rows.min(cols);
-    //         for i in 0..n {
-    //             v[offset + i * cols + i] = 1.0;
-    //         }
-    //     }
-    //     v
-    // };
-
     let (rhs, rhs_data) = input_test_tensor(
         &client,
         dtype,

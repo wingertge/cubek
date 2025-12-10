@@ -17,6 +17,8 @@ use cubek_matmul::{
 use crate::suite::test_utils::output_test_tensor;
 use crate::suite::test_utils::{assert_result, input_test_tensor};
 
+// TODO should be always used, remove feature flags
+#[allow(unused)]
 /// Test the correctness of the specified Matmul on the given device,
 /// against a naive CPU implementation over the given problem
 pub fn test_tma_matmul_algorithm<A: Algorithm>(

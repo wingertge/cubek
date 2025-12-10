@@ -1,7 +1,6 @@
 use cubecl::TestRuntime;
 use cubecl::prelude::*;
 
-use crate::suite::test_utils::new_eyed;
 use crate::suite::test_utils::output_test_tensor;
 use crate::suite::test_utils::{assert_result, input_test_tensor};
 use cubek_matmul::components::global::args::ConcreteInputsFactory;
@@ -20,6 +19,8 @@ use cubek_matmul::{
     components::{AvailableLineSizes, MatmulIdent},
 };
 
+// TODO should be always used, remove feature flags
+#[allow(unused)]
 /// Test the correctness of the specified Matmul on the given device,
 /// against a naive CPU implementation over the given problem
 pub fn test_matmul_algorithm<A: Algorithm>(
@@ -39,8 +40,6 @@ pub fn test_matmul_algorithm<A: Algorithm>(
         Err(_) => false,
     };
 
-    println!("{:?}", problem);
-
     let (lhs, lhs_data) = input_test_tensor(
         &client,
         dtypes.lhs_global,
@@ -48,22 +47,6 @@ pub fn test_matmul_algorithm<A: Algorithm>(
         problem.lhs_layout,
         problem.shape(MatmulIdent::Lhs),
     );
-
-    // let lhs = new_eyed(&client, problem.shape(MatmulIdent::Lhs), *dtypes.lhs_global);
-    // let lhs_data: Vec<f32> = {
-    //     let batch = problem.lhs_batches.iter().product();
-    //     let rows = problem.m;
-    //     let cols = problem.k;
-    //     let mut v = vec![0.0; batch * rows * cols];
-    //     for b in 0..batch {
-    //         let offset = b * rows * cols;
-    //         let n = rows.min(cols);
-    //         for i in 0..n {
-    //             v[offset + i * cols + i] = 1.0;
-    //         }
-    //     }
-    //     v
-    // };
 
     let (rhs, rhs_data) = input_test_tensor(
         &client,
