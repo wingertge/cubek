@@ -93,7 +93,7 @@ impl<'a, R: Runtime> OutLayoutLaunch<'a, R> {
         Self::new(shape_out, shape_m, shape_n, config)
     }
 
-    pub fn from_args_backprop_weights(
+    pub fn from_args_wgrad(
         client: &ComputeClient<R>,
         problem: &ConvolutionProblem,
         config: GlobalMemoryConfig,

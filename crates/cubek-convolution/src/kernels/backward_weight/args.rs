@@ -98,12 +98,9 @@ impl<Lhs: Numeric, Rhs: Numeric, EO: Numeric> ConcreteInputsFactory for TensorIn
             )
         };
 
-        let layout_lhs = OutLayoutLaunch::from_args_backprop_weights(
-            client,
-            problem,
-            config.lhs_global_memory_config(),
-        );
-        let layout_rhs = Im2colLayoutLaunch::from_args_backprop_weights(
+        let layout_lhs =
+            OutLayoutLaunch::from_args_wgrad(client, problem, config.lhs_global_memory_config());
+        let layout_rhs = Im2colLayoutLaunch::from_args_wgrad(
             client,
             problem,
             padded_channels,
@@ -149,6 +146,8 @@ impl<EG: Numeric> ConcreteOutputFactory for TensorOutput<EG> {
         config: impl ConvGemmConfig,
         dtypes: &MatmulElems,
     ) -> Self::RuntimeArg<'a, R> {
+        // Weight layout assumes col-major so it's technically "transposed" when it's row-major.
+        // Should look into maybe inverting this and using `Transpose` for forward instead.
         type Layout = Chain<NhwcLayout, Transpose<WeightLayout>>;
 
         let load_width = client.properties().hardware.load_width;
@@ -161,7 +160,7 @@ impl<EG: Numeric> ConcreteOutputFactory for TensorOutput<EG> {
             false,
             !problem.channels.is_multiple_of(channel_align),
         );
-        let layout = WeightLayoutLaunch::from_args_backprop_weights(
+        let layout = WeightLayoutLaunch::from_args_wgrad(
             client,
             problem,
             padded_channels,

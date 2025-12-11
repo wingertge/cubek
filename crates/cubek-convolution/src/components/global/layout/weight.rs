@@ -114,7 +114,7 @@ impl<'a, R: Runtime> WeightLayoutLaunch<'a, R> {
         WeightLayoutLaunch::new(padded_channels, shape_k, shape_n, params, config)
     }
 
-    pub fn from_args_backprop_weights(
+    pub fn from_args_wgrad(
         client: &ComputeClient<R>,
         problem: &ConvolutionProblem,
         padded_channels: u32,

@@ -134,7 +134,7 @@ impl<'a, R: Runtime> Im2colLayoutLaunch<'a, R> {
         Im2colLayoutLaunch::new(shape_out, padded_channels, shape_m, shape_k, params, config)
     }
 
-    pub fn from_args_backprop_weights(
+    pub fn from_args_wgrad(
         client: &ComputeClient<R>,
         problem: &ConvolutionProblem,
         padded_channels: u32,
