@@ -20,8 +20,8 @@ use cubek_matmul::{
         global::{
             GlobalConfig as _,
             args::{
-                TensorInputs, TensorInputsLaunch, TensorMapInputs, TensorMapInputsLaunch,
-                TensorOutput, TensorOutputLaunch,
+                MatmulArgs, TensorArgs, TensorInputs, TensorInputsLaunch, TensorMapArgs,
+                TensorMapInputs, TensorMapInputsLaunch, TensorOutput, TensorOutputLaunch,
             },
             memory::{NoopLayout, NoopLayoutLaunch, Transpose, TransposeLaunch},
         },
@@ -40,6 +40,57 @@ use crate::components::{
         },
     },
 };
+
+pub trait ConcreteArgs:
+    MatmulArgs<
+        Input<NumericExpand<0>, NumericExpand<1>, NumericExpand<2>>: ConcreteInputsFactory,
+        Output<NumericExpand<2>>: ConcreteOutputFactory,
+    >
+{
+    fn adjust_problem<R: Runtime>(
+        client: &ComputeClient<R>,
+        problem: ConvolutionProblem,
+        selection: &MatmulSelection,
+        dtypes: &MatmulElems,
+    ) -> ConvolutionProblem;
+}
+
+impl ConcreteArgs for TensorArgs {
+    fn adjust_problem<R: Runtime>(
+        client: &ComputeClient<R>,
+        mut problem: ConvolutionProblem,
+        _selection: &MatmulSelection,
+        dtypes: &MatmulElems,
+    ) -> ConvolutionProblem {
+        let load_width = client.properties().hardware.load_width;
+        let channel_align = load_width as usize / dtypes.lhs_global.size_bits();
+        let padded_channels = problem.channels.next_multiple_of(channel_align);
+        let shape_n = problem.kernel_size.iter().product::<u32>() as usize * padded_channels;
+
+        problem.n = shape_n;
+        problem.padded_channels = padded_channels;
+
+        problem
+    }
+}
+
+impl ConcreteArgs for TensorMapArgs {
+    fn adjust_problem<R: Runtime>(
+        _client: &ComputeClient<R>,
+        mut problem: ConvolutionProblem,
+        selection: &MatmulSelection,
+        _dtypes: &MatmulElems,
+    ) -> ConvolutionProblem {
+        let channel_align = selection.tiling_scheme.tile_size.n() as usize;
+        let padded_channels = problem.channels.next_multiple_of(channel_align);
+        let shape_n = problem.kernel_size.iter().product::<u32>() as usize * padded_channels;
+
+        problem.n = shape_n;
+        problem.padded_channels = padded_channels;
+
+        problem
+    }
+}
 
 /// Create the input runtime arguments for a matmul kernel that works on concrete inputs and
 /// output (not fused).
@@ -67,7 +118,6 @@ pub trait ConcreteOutputFactory: LaunchArg {
         problem: &ConvolutionProblem,
         line_sizes: &MatmulLineSizes,
         config: impl ConvGemmConfig,
-        dtypes: &MatmulElems,
     ) -> Self::RuntimeArg<'a, R>;
 }
 
@@ -103,7 +153,6 @@ impl<Lhs: Numeric, Rhs: Numeric, EO: Numeric> ConcreteInputsFactory for TensorIn
         let layout_rhs = Im2colLayoutLaunch::from_args_wgrad(
             client,
             problem,
-            padded_channels,
             config.convolution_params(),
             config.rhs_global_memory_config(),
         );
@@ -144,28 +193,19 @@ impl<EG: Numeric> ConcreteOutputFactory for TensorOutput<EG> {
         problem: &ConvolutionProblem,
         line_sizes: &MatmulLineSizes,
         config: impl ConvGemmConfig,
-        dtypes: &MatmulElems,
     ) -> Self::RuntimeArg<'a, R> {
         // Weight layout assumes col-major so it's technically "transposed" when it's row-major.
         // Should look into maybe inverting this and using `Transpose` for forward instead.
         type Layout = Chain<NhwcLayout, Transpose<WeightLayout>>;
 
-        let load_width = client.properties().hardware.load_width;
-        let channel_align = load_width as usize / dtypes.lhs_global.size_bits();
-        let padded_channels = problem.channels as u32;
-
         let global = NhwcLayoutLaunch::from_handle(
             out,
             line_sizes.out as u32,
             false,
-            !problem.channels.is_multiple_of(channel_align),
+            problem.check_channel(),
         );
-        let layout = WeightLayoutLaunch::from_args_wgrad(
-            client,
-            problem,
-            padded_channels,
-            config.rhs_global_memory_config(),
-        );
+        let layout =
+            WeightLayoutLaunch::from_args_wgrad(client, problem, config.rhs_global_memory_config());
         let layout = ChainLaunch::new(global, TransposeLaunch::new(layout));
         let view = ViewArg::new::<Layout>(out.as_array_arg(line_sizes.out), layout);
         let batch = VirtualLayoutLaunch::new::<NoopLayout>(NoopLayoutLaunch::new());

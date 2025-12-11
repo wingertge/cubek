@@ -1,7 +1,5 @@
 use crate::{
-    ConvolutionArgs, Strategy,
-    components::ConvGemmConfig as _,
-    forward::args::{ConcreteInputsFactory, ConcreteOutputFactory},
+    ConvolutionArgs, Strategy, components::ConvGemmConfig as _, forward::args::ConcreteArgs,
     kernels::forward::simple::*,
 };
 use crate::{components::ConvSetupError, kernels::forward::selector::launch_kernel_concrete};
@@ -15,16 +13,13 @@ use cubecl::{
     prelude::*,
     std::{CubeOption, tensor::TensorHandle},
 };
+use cubek_matmul::MatmulInputHandleRef;
 use cubek_matmul::{
     AcceleratedTileKind, MatmulInputHandle, ReadingStrategy,
     components::{
         self, AvailableLineSizes, MatmulElems, MatrixLayout,
         tile::{cmma::CmmaMatmul, io::Strided, mma::MmaMatmul},
     },
-};
-use cubek_matmul::{
-    MatmulInputHandleRef,
-    components::{InputArg, OutputArg},
 };
 use derive_new::new;
 
@@ -116,8 +111,7 @@ struct Convolution<'a, R: Runtime, const N_SPATIAL: usize> {
 impl<'a, R: Runtime, const N_SPATIAL: usize> Convolution<'a, R, N_SPATIAL> {
     fn launch<Alg: Algorithm>(self) -> Result<(), ConvSetupError>
     where
-        InputArg<Alg::Args>: ConcreteInputsFactory,
-        OutputArg<Alg::Args>: ConcreteOutputFactory,
+        Alg::Args: ConcreteArgs,
     {
         let ConvolutionArgs {
             stride,
@@ -157,8 +151,7 @@ fn launch_with_algorithm<R: Runtime, Alg: Algorithm>(
     dtypes: MatmulElems,
 ) -> Result<(), ConvSetupError>
 where
-    InputArg<Alg::Args>: ConcreteInputsFactory,
-    OutputArg<Alg::Args>: ConcreteOutputFactory,
+    Alg::Args: ConcreteArgs,
 {
     let rank = input.data().shape.len();
     let dim_c = rank - 1;
@@ -199,6 +192,8 @@ where
         out_shape: out_shape.to_vec(),
         channels: c,
 
+        padded_channels: c,
+
         dimensionality,
     };
 
@@ -216,8 +211,7 @@ pub fn launch_kernel<R: Runtime, Alg: Algorithm>(
     mut dtypes: MatmulElems,
 ) -> Result<(), ConvSetupError>
 where
-    InputArg<Alg::Args>: ConcreteInputsFactory,
-    OutputArg<Alg::Args>: ConcreteOutputFactory,
+    Alg::Args: ConcreteArgs,
 {
     let plane_dim = client.properties().hardware.plane_size_max;
     // Shape/strides are treated as k-major, with the last dim always being the contiguous one.
@@ -243,6 +237,7 @@ where
     let line_sizes = Alg::filter_line_sizes(line_sizes).pick_max()?;
 
     let selection = Alg::selection(client, &problem, plane_dim, &line_sizes, &mut dtypes)?;
+    let problem = Alg::Args::adjust_problem(client, problem, &selection, &dtypes);
 
     let config = Alg::setup(client, &problem, &selection, &line_sizes, &dtypes)?;
 

@@ -20,8 +20,8 @@ use cubek_matmul::{
         global::{
             GlobalConfig as _,
             args::{
-                TensorInputs, TensorInputsLaunch, TensorMapInputs, TensorMapInputsLaunch,
-                TensorOutput, TensorOutputLaunch,
+                MatmulArgs, TensorArgs, TensorInputs, TensorInputsLaunch, TensorMapArgs,
+                TensorMapInputs, TensorMapInputsLaunch, TensorOutput, TensorOutputLaunch,
             },
             memory::{NoopLayout, NoopLayoutLaunch},
         },
@@ -40,6 +40,57 @@ use crate::components::{
         },
     },
 };
+
+pub trait ConcreteArgs:
+    MatmulArgs<
+        Input<NumericExpand<0>, NumericExpand<1>, NumericExpand<2>>: ConcreteInputsFactory,
+        Output<NumericExpand<2>>: ConcreteOutputFactory,
+    >
+{
+    fn adjust_problem<R: Runtime>(
+        client: &ComputeClient<R>,
+        problem: ConvolutionProblem,
+        selection: &MatmulSelection,
+        dtypes: &MatmulElems,
+    ) -> ConvolutionProblem;
+}
+
+impl ConcreteArgs for TensorArgs {
+    fn adjust_problem<R: Runtime>(
+        client: &ComputeClient<R>,
+        mut problem: ConvolutionProblem,
+        _selection: &MatmulSelection,
+        dtypes: &MatmulElems,
+    ) -> ConvolutionProblem {
+        let load_width = client.properties().hardware.load_width;
+        let channel_align = load_width as usize / dtypes.lhs_global.size_bits();
+        let padded_channels = problem.channels.next_multiple_of(channel_align);
+        let shape_k = problem.kernel_size.iter().product::<u32>() as usize * padded_channels;
+
+        problem.k = shape_k;
+        problem.padded_channels = padded_channels;
+
+        problem
+    }
+}
+
+impl ConcreteArgs for TensorMapArgs {
+    fn adjust_problem<R: Runtime>(
+        _client: &ComputeClient<R>,
+        mut problem: ConvolutionProblem,
+        selection: &MatmulSelection,
+        _dtypes: &MatmulElems,
+    ) -> ConvolutionProblem {
+        let channel_align = selection.tiling_scheme.tile_size.k() as usize;
+        let padded_channels = problem.channels.next_multiple_of(channel_align);
+        let shape_k = problem.kernel_size.iter().product::<u32>() as usize * padded_channels;
+
+        problem.k = shape_k;
+        problem.padded_channels = padded_channels;
+
+        problem
+    }
+}
 
 /// Create the input runtime arguments for a matmul kernel that works on concrete inputs and
 /// output (not fused).
@@ -82,37 +133,29 @@ impl<Lhs: Numeric, Rhs: Numeric, EO: Numeric> ConcreteInputsFactory for TensorIn
         problem: &ConvolutionProblem,
         line_sizes: &MatmulLineSizes,
         config: impl ConvGemmConfig,
-        dtypes: &MatmulElems,
+        _dtypes: &MatmulElems,
     ) -> (Self::RuntimeArg<'a, R>, RuntimeArgsLaunch<'a, R>) {
         type LhsLayout = Chain<NhwcLayout, Im2colLayout>;
         type RhsLayout = Chain<NhwcLayout, WeightLayout>;
 
-        let load_width = client.properties().hardware.load_width;
-        let channel_align = load_width as usize / dtypes.lhs_global.size_bits();
-        let padded_channels = (problem.channels as u32).next_multiple_of(channel_align as u32);
-        let shape_k = problem.kernel_size.iter().product::<u32>() * padded_channels;
+        let padded_channels = problem.padded_channels as u32;
 
         let layout_nhwc = |handle, line_size, check_spatial| {
             NhwcLayoutLaunch::from_handle(
                 handle,
                 line_size as u32,
                 check_spatial,
-                !problem.channels.is_multiple_of(channel_align),
+                problem.check_channel(),
             )
         };
         let layout_lhs = Im2colLayoutLaunch::from_args(
             client,
             problem,
-            padded_channels,
             config.convolution_params(),
             config.lhs_global_memory_config(),
         );
-        let layout_rhs = WeightLayoutLaunch::from_args(
-            client,
-            problem,
-            padded_channels,
-            config.rhs_global_memory_config(),
-        );
+        let layout_rhs =
+            WeightLayoutLaunch::from_args(client, problem, config.rhs_global_memory_config());
         let layout_bias =
             BiasLayoutLaunch::new(ScalarArg::new(problem.n as u32), line_sizes.out as u32);
 
@@ -139,7 +182,7 @@ impl<Lhs: Numeric, Rhs: Numeric, EO: Numeric> ConcreteInputsFactory for TensorIn
         );
 
         let runtime_args = RuntimeArgsLaunch::new(
-            ScalarArg::new(shape_k),
+            ScalarArg::new(problem.k as u32),
             ScalarArg::new(problem.channels as u32),
             FastDivmodArgs::new(client, padded_channels),
         );
@@ -230,9 +273,8 @@ impl<Lhs: Numeric, Rhs: Numeric, EO: Numeric> ConcreteInputsFactory
             *dtypes.rhs_global,
         );
 
-        let channel_align = config.matmul_config().stage_config().elements_in_tile_k();
-        let padded_channels = (problem.channels as u32).next_multiple_of(channel_align);
-        let shape_k = problem.kernel_size.iter().product::<u32>() * padded_channels;
+        let padded_channels = problem.padded_channels as u32;
+        let shape_k = problem.k as u32;
 
         let shape_out = problem
             .out_shape
@@ -251,8 +293,7 @@ impl<Lhs: Numeric, Rhs: Numeric, EO: Numeric> ConcreteInputsFactory
             ConvolutionParams::from_problem(problem),
             !shape_k.is_multiple_of(stages_size_k),
         );
-        let rhs_layout =
-            WeightLayoutLaunch::from_args(client, problem, padded_channels, Default::default());
+        let rhs_layout = WeightLayoutLaunch::from_args(client, problem, Default::default());
 
         let bias = bias.map(|bias| {
             let layout =

@@ -55,7 +55,6 @@ where
         &problem,
         &line_sizes,
         config,
-        dtypes,
     );
 
     let result = unsafe {

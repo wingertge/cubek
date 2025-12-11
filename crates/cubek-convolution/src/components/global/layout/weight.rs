@@ -101,12 +101,11 @@ impl<'a, R: Runtime> WeightLayoutLaunch<'a, R> {
     pub fn from_args(
         client: &ComputeClient<R>,
         problem: &ConvolutionProblem,
-        padded_channels: u32,
         config: GlobalMemoryConfig,
     ) -> Self {
-        let size_k = problem.kernel_size.iter().product::<u32>() * padded_channels;
+        let padded_channels = problem.padded_channels as u32;
         let padded_channels = FastDivmodArgs::new(client, padded_channels);
-        let shape_k = ScalarArg::new(size_k);
+        let shape_k = ScalarArg::new(problem.k as u32);
         let shape_n = ScalarArg::new(problem.n as u32);
 
         let params = ConvolutionParams::from_problem(problem);
@@ -117,13 +116,12 @@ impl<'a, R: Runtime> WeightLayoutLaunch<'a, R> {
     pub fn from_args_wgrad(
         client: &ComputeClient<R>,
         problem: &ConvolutionProblem,
-        padded_channels: u32,
         config: GlobalMemoryConfig,
     ) -> Self {
-        let size_n = problem.kernel_size.iter().product::<u32>() * padded_channels;
+        let padded_channels = problem.padded_channels as u32;
         let padded_channels = FastDivmodArgs::new(client, padded_channels);
         let shape_m = ScalarArg::new(problem.m as u32);
-        let shape_n = ScalarArg::new(size_n);
+        let shape_n = ScalarArg::new(problem.n as u32);
 
         let params = ConvolutionParams::from_problem(problem);
 

@@ -3,7 +3,7 @@ use cubecl::prelude::*;
 use cubecl::{CubeElement, server::Allocation};
 use cubek_convolution::{
     components::ConvGemmConfig,
-    forward::args::{ConcreteInputsFactory, ConcreteOutputFactory},
+    forward::args::{ConcreteArgs, ConcreteInputsFactory, ConcreteOutputFactory},
 };
 use cubek_convolution::{
     components::{ConvolutionProblem, global::entry_point::ConvolutionLaunch},
@@ -27,6 +27,7 @@ pub fn test_convolution_algorithm<A, P, R>(
     R: Runtime,
     InputArg<A::Args>: ConcreteInputsFactory,
     OutputArg<A::Args>: ConcreteOutputFactory,
+    A::Args: ConcreteArgs,
 {
     let env = std::env::var("MATMUL_TEST_MODE");
 
@@ -59,6 +60,8 @@ pub fn test_convolution_algorithm<A, P, R>(
     .unwrap();
 
     let dtypes = MatmulElems::new::<((P::EG, P::ES), (P::EG, P::ES), (P::EG, f32))>();
+    let problem = A::Args::adjust_problem(&client, problem, &selection, &dtypes);
+
     let config = match A::setup(&client, &problem, &selection, &line_sizes, &dtypes) {
         Ok(config) => config,
         Err(err) => {

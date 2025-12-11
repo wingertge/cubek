@@ -115,7 +115,6 @@ impl<'a, R: Runtime> Im2colLayoutLaunch<'a, R> {
     pub fn from_args(
         client: &ComputeClient<R>,
         problem: &ConvolutionProblem,
-        padded_channels: u32,
         params: ConvolutionParams,
         config: GlobalMemoryConfig,
     ) -> Self {
@@ -125,11 +124,11 @@ impl<'a, R: Runtime> Im2colLayoutLaunch<'a, R> {
             .map(|s| FastDivmodArgs::new(client, *s as u32))
             .collect();
 
-        let size_k = problem.kernel_size.iter().product::<u32>() * padded_channels;
+        let padded_channels = problem.padded_channels as u32;
         let padded_channels = FastDivmodArgs::new(client, padded_channels);
 
         let shape_m = ScalarArg::new(problem.m as u32);
-        let shape_k = ScalarArg::new(size_k);
+        let shape_k = ScalarArg::new(problem.k as u32);
 
         Im2colLayoutLaunch::new(shape_out, padded_channels, shape_m, shape_k, params, config)
     }
@@ -137,7 +136,6 @@ impl<'a, R: Runtime> Im2colLayoutLaunch<'a, R> {
     pub fn from_args_wgrad(
         client: &ComputeClient<R>,
         problem: &ConvolutionProblem,
-        padded_channels: u32,
         params: ConvolutionParams,
         config: GlobalMemoryConfig,
     ) -> Self {
@@ -147,11 +145,11 @@ impl<'a, R: Runtime> Im2colLayoutLaunch<'a, R> {
             .map(|s| FastDivmodArgs::new(client, *s as u32))
             .collect();
 
-        let size_n = problem.kernel_size.iter().product::<u32>() * padded_channels;
+        let padded_channels = problem.padded_channels as u32;
         let padded_channels = FastDivmodArgs::new(client, padded_channels);
 
         let shape_k = ScalarArg::new(problem.k as u32);
-        let shape_n = ScalarArg::new(size_n);
+        let shape_n = ScalarArg::new(problem.n as u32);
 
         Im2colLayoutLaunch::new(shape_out, padded_channels, shape_k, shape_n, params, config)
     }

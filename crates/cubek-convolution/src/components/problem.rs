@@ -23,6 +23,9 @@ pub struct ConvolutionProblem {
     pub shape: Vec<usize>,
     pub out_shape: Vec<usize>,
 
+    /// Channels after applying loader-specific padding
+    pub padded_channels: usize,
+
     pub dimensionality: Dimensionality,
 }
 
@@ -49,6 +52,10 @@ impl ConvolutionProblem {
             lhs_layout: self.lhs_layout,
             rhs_layout: self.rhs_layout,
         }
+    }
+
+    pub fn check_channel(&self) -> bool {
+        self.channels != self.padded_channels
     }
 }
 
