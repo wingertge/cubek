@@ -164,8 +164,10 @@ where
     let kernel_shape = &weight_grad.shape[1..dim_c];
     let out_shape = &out_grad.shape()[1..dim_c];
 
-    let input_data = Alg::into_tensor_handle(client, input.data(), *dtypes.lhs_global)?;
-    let out_grad_data = Alg::into_tensor_handle(client, out_grad.data(), *dtypes.rhs_global)?;
+    let op = ConvolutionOperation::BackwardWeight;
+
+    let input_data = Alg::into_tensor_handle(client, input.data(), *dtypes.lhs_global, op)?;
+    let out_grad_data = Alg::into_tensor_handle(client, out_grad.data(), *dtypes.rhs_global, op)?;
 
     let mut input = *input;
     let mut out_grad = *out_grad;
@@ -192,7 +194,7 @@ where
         channels: c,
 
         padded_channels: c,
-        operation: ConvolutionOperation::BackwardWeight,
+        operation: op,
 
         dimensionality,
     };

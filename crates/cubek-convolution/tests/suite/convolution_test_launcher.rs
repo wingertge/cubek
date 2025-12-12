@@ -2,7 +2,7 @@ use crate::suite::test_utils::{Sample, TensorRawParts};
 use cubecl::prelude::*;
 use cubecl::{CubeElement, server::Allocation};
 use cubek_convolution::{
-    components::ConvGemmConfig,
+    components::{ConvGemmConfig, ConvolutionOperation},
     forward::args::{ConcreteArgs, ConcreteInputsFactory, ConcreteOutputFactory},
 };
 use cubek_convolution::{
@@ -94,10 +94,12 @@ pub fn test_convolution_algorithm<A, P, R>(
         TensorHandleRef::from_raw_parts(&out.handle, &out.strides, &out.shape, elem_size)
     };
 
+    let op = ConvolutionOperation::Forward;
+
     let lhs_handle =
-        A::into_tensor_handle(&client, &lhs_handle, P::EG::as_type_native_unchecked()).unwrap();
+        A::into_tensor_handle(&client, &lhs_handle, P::EG::as_type_native_unchecked(), op).unwrap();
     let rhs_handle =
-        A::into_tensor_handle(&client, &rhs_handle, P::EG::as_type_native_unchecked()).unwrap();
+        A::into_tensor_handle(&client, &rhs_handle, P::EG::as_type_native_unchecked(), op).unwrap();
 
     let lhs_handle =
         MatmulInputHandleRef::new(lhs_handle.as_ref(), P::EG::as_type_native_unchecked());

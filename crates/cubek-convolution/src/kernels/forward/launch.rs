@@ -167,8 +167,10 @@ where
     let kernel_shape = &weight.data().shape[1..dim_c];
     let out_shape = &out.shape[1..dim_c];
 
-    let input_data = Alg::into_tensor_handle(client, input.data(), *dtypes.lhs_global)?;
-    let weight_data = Alg::into_tensor_handle(client, weight.data(), *dtypes.rhs_global)?;
+    let op = ConvolutionOperation::Forward;
+
+    let input_data = Alg::into_tensor_handle(client, input.data(), *dtypes.lhs_global, op)?;
+    let weight_data = Alg::into_tensor_handle(client, weight.data(), *dtypes.rhs_global, op)?;
 
     let mut input = *input;
     let mut weight = *weight;
@@ -195,7 +197,7 @@ where
         channels: c,
 
         padded_channels: c,
-        operation: ConvolutionOperation::Forward,
+        operation: op,
 
         dimensionality,
     };
