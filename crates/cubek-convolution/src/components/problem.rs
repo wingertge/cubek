@@ -57,9 +57,9 @@ impl ConvolutionProblem {
         let rhs_strides = match self.rhs_layout {
             MatrixLayout::RowMajor => self.rhs_strides.clone(),
             MatrixLayout::ColMajor => {
-                let mut lhs_strides = self.rhs_strides[1..rank].to_vec();
-                lhs_strides.push(self.rhs_strides[0]);
-                lhs_strides
+                let mut rhs_strides = self.rhs_strides[1..rank].to_vec();
+                rhs_strides.push(self.rhs_strides[0]);
+                rhs_strides
             }
         };
 
