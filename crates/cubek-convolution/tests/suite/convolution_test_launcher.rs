@@ -29,7 +29,7 @@ pub fn test_convolution_algorithm<A, P, R>(
     OutputArg<A::Args>: ConcreteOutputFactory,
     A::Args: ConcreteArgs,
 {
-    let env = std::env::var("MATMUL_TEST_MODE");
+    let env = std::env::var("CUBEK_TEST_MODE");
 
     let panic_on_launch_err = match env {
         Ok(val) => match val.as_str() {
