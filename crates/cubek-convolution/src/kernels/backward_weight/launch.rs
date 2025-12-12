@@ -1,6 +1,8 @@
 use crate::{
-    ConvolutionArgs, Strategy, backward_weight::args::ConcreteArgs,
-    components::ConvGemmConfig as _, kernels::forward::simple::*,
+    ConvolutionArgs, Strategy,
+    backward_weight::args::ConcreteArgs,
+    components::{ConvGemmConfig as _, ConvolutionOperation},
+    kernels::forward::simple::*,
 };
 use crate::{
     components::ConvSetupError, kernels::backward_weight::selector::launch_kernel_concrete,
@@ -190,6 +192,7 @@ where
         channels: c,
 
         padded_channels: c,
+        operation: ConvolutionOperation::BackwardWeight,
 
         dimensionality,
     };
@@ -234,8 +237,6 @@ where
 
     let selection = Alg::selection(client, &problem, plane_dim, &line_sizes, &mut dtypes)?;
     let problem = Alg::Args::adjust_problem(client, problem, &selection, &dtypes);
-
-    println!("problem: {problem:?}");
 
     let config = Alg::setup(client, &problem, &selection, &line_sizes, &dtypes)?;
 

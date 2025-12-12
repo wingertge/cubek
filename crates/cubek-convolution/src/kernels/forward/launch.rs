@@ -1,5 +1,7 @@
 use crate::{
-    ConvolutionArgs, Strategy, components::ConvGemmConfig as _, forward::args::ConcreteArgs,
+    ConvolutionArgs, Strategy,
+    components::{ConvGemmConfig as _, ConvolutionOperation},
+    forward::args::ConcreteArgs,
     kernels::forward::simple::*,
 };
 use crate::{components::ConvSetupError, kernels::forward::selector::launch_kernel_concrete};
@@ -193,6 +195,7 @@ where
         channels: c,
 
         padded_channels: c,
+        operation: ConvolutionOperation::Forward,
 
         dimensionality,
     };

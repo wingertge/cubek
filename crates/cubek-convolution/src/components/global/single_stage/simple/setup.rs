@@ -91,7 +91,6 @@ where
             plane_role_config.plane_roles,
         );
 
-        let num_stages = 1;
         let precompute_job = selection.loading_precompute_strategy.into();
         let plane_dim = selection.plane_dim;
         let event_loading_mode = EventLoadingMode::Relaxed;
@@ -170,7 +169,7 @@ where
             &problem.dilation,
             &problem.padding,
             problem.dimensionality,
-            num_stages,
+            problem.operation,
         )
     }
 }

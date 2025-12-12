@@ -47,7 +47,7 @@ impl Im2colLayout {
             padded_channels,
             rows,
             cols,
-            params: config.convolution_params,
+            params: config.params,
             config: config.lhs_global_memory_config(),
         }
     }

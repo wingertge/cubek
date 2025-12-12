@@ -2,7 +2,7 @@ use crate::suite::convolution_test_launcher::test_convolution_algorithm;
 use crate::suite::test_utils::TestPrecision;
 use cubecl::Runtime;
 use cubek_convolution::{
-    components::{ConvolutionProblem, Dimensionality},
+    components::{ConvolutionOperation, ConvolutionProblem, Dimensionality},
     forward::args::{ConcreteInputsFactory, ConcreteOutputFactory},
 };
 use cubek_convolution::{forward::args::ConcreteArgs, kernels::forward::algorithm::Algorithm};
@@ -66,6 +66,7 @@ pub fn test_algo<A: Algorithm, P: TestPrecision, R: Runtime>(
         padded_channels: problem.c,
         out_shape: vec![out_h, out_w],
         dimensionality: Dimensionality::Dim2,
+        operation: ConvolutionOperation::Forward,
     };
 
     test_convolution_algorithm::<A, P, R>(client, problem, selection);

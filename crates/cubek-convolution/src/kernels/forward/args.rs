@@ -151,7 +151,7 @@ impl<Lhs: Numeric, Rhs: Numeric, EO: Numeric> ConcreteInputsFactory for TensorIn
         let layout_lhs = Im2colLayoutLaunch::from_args(
             client,
             problem,
-            config.convolution_params(),
+            config.params(),
             config.lhs_global_memory_config(),
         );
         let layout_rhs =
@@ -185,6 +185,7 @@ impl<Lhs: Numeric, Rhs: Numeric, EO: Numeric> ConcreteInputsFactory for TensorIn
             ScalarArg::new(problem.k as u32),
             ScalarArg::new(problem.channels as u32),
             FastDivmodArgs::new(client, padded_channels),
+            config.operation(),
         );
 
         (inputs, runtime_args)
@@ -314,6 +315,7 @@ impl<Lhs: Numeric, Rhs: Numeric, EO: Numeric> ConcreteInputsFactory
             ScalarArg::new(shape_k),
             ScalarArg::new(problem.channels as u32),
             FastDivmodArgs::new(client, padded_channels),
+            config.operation(),
         );
 
         (inputs, runtime_args)

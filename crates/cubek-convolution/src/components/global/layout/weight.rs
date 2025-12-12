@@ -42,7 +42,7 @@ impl WeightLayout {
             rows,
             cols,
             padded_channels,
-            params: config.convolution_params,
+            params: config.params,
             config: config.rhs_global_memory_config(),
         }
     }
