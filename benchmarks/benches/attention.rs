@@ -9,13 +9,9 @@ use cubecl::{
     std::tensor::TensorHandle,
 };
 use cubek::{
-    attention::{
-        self as attention, Strategy,
-        components::{
-            AttentionElems, AttentionIdent, AttentionPrecision, AttentionProblem,
-            AttentionStorageTypes,
-            attention_types::{KG, MSK, OG, QG, VG},
-        },
+    attention::launch::{
+        AttentionDefinition, AttentionElems, AttentionIdent, AttentionPrecision, Strategy,
+        attention_types::*,
     },
     random::random_uniform,
 };
@@ -75,15 +71,15 @@ impl<R: Runtime, AP: AttentionPrecision> Benchmark for AttentionBench<R, AP> {
     }
 
     fn execute(&self, input: Self::Input) -> Result<(), String> {
-        let client = R::client(&self.device);
-        let dtypes = AttentionElems::new::<AP>();
-
-        let out: TensorHandle<R> = TensorHandle::empty(
-            &client,
-            self.problem.shape(AttentionIdent::Out).to_vec(),
-            dtypes.out_global,
-        );
         todo!();
+        // let client = R::client(&self.device);
+        // let dtypes = AttentionElems::new::<AP>();
+
+        // let out: TensorHandle<R> = TensorHandle::empty(
+        //     &client,
+        //     self.problem.shape(AttentionIdent::Out).to_vec(),
+        //     dtypes.out_global,
+        // )
 
         // attention::launch_ref(
         //     &Strategy::BlackboxAccelerated,
@@ -126,7 +122,7 @@ impl<R: Runtime, AP: AttentionPrecision> Benchmark for AttentionBench<R, AP> {
 
 #[allow(dead_code)]
 pub struct AttentionBench<R: Runtime, AP> {
-    problem: AttentionProblem,
+    problem: AttentionDefinition,
     strategy: Strategy,
     device: R::Device,
     client: ComputeClient<R>,

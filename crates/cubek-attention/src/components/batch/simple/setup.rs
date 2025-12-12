@@ -2,16 +2,22 @@ use std::marker::PhantomData;
 
 use cubecl::server::LaunchError;
 
-use crate::components::{
-    AttentionBlueprint, AttentionElems, AttentionPrecision, AttentionSetupError, InputRuntimeArg,
-    OutputRuntimeArg,
-    args::AttentionArgs,
-    batch::{
-        BatchAttentionFamily,
-        entry_point::attention,
-        simple::{SimpleBatchAttention, config::SimpleBatchConfig},
+use crate::{
+    components::{
+        batch::{
+            BatchAttentionFamily,
+            entry_point::attention,
+            simple::{
+                SimpleBatchAttention,
+                config::{HypercubeConfig, SimpleBatchConfig},
+            },
+        },
+        global::GlobalAttentionFamily,
     },
-    global::GlobalAttentionFamily,
+    launch::{
+        AttentionBlueprint, AttentionElems, AttentionPrecision, AttentionSetupError,
+        CubeCountInputArgs, InputRuntimeArg, OutputRuntimeArg, args::AttentionArgs,
+    },
 };
 
 pub struct SimpleBatchAttentionFamily<GA: GlobalAttentionFamily> {
@@ -28,7 +34,7 @@ impl<GA: GlobalAttentionFamily> BatchAttentionFamily for SimpleBatchAttentionFam
         cube_count: cubecl::CubeCount,
         input: InputRuntimeArg<'a, AA, R>,
         output: OutputRuntimeArg<'a, AA, R>,
-        cube_count_input: crate::components::batch::CubeCountInputArgs<'a, R>,
+        cube_count_input: CubeCountInputArgs<'a, R>,
         dtypes: &AttentionElems,
         blueprint: AttentionBlueprint,
     ) -> Result<(), LaunchError> {
@@ -53,7 +59,7 @@ impl<GA: GlobalAttentionFamily> BatchAttentionFamily for SimpleBatchAttentionFam
 
         Ok(SimpleBatchConfig::new(
             global_config,
-            blueprint.hypercube_blueprint.to_hypercube_config(),
+            HypercubeConfig::from_blueprint(blueprint.hypercube_blueprint),
         ))
     }
 }

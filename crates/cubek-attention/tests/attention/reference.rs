@@ -1,10 +1,9 @@
-use cubek_attention::components::{AttentionIdent, AttentionProblem};
+use cubek_attention::launch::{AttentionDefinition, AttentionElems, AttentionIdent};
 
 use core::f32;
 
 use cubecl::{TestRuntime, client::ComputeClient, std::tensor::TensorHandle};
 
-use cubek_attention::components::AttentionElems;
 use cubek_std::test_utils::assert_equals_approx;
 
 #[allow(clippy::too_many_arguments)]
@@ -13,13 +12,13 @@ pub fn assert_result(
     key: &[f32],
     value: &[f32],
     mask: Option<&[bool]>,
-    problem: &AttentionProblem,
+    definition: &AttentionDefinition,
     client: &ComputeClient<TestRuntime>,
     out: TensorHandle<TestRuntime>,
     elems: AttentionElems,
 ) {
     let epsilon = attention_epsilon(&elems, 170.);
-    let expected = flash_attention_v2_cpu(query, key, value, mask, problem);
+    let expected = flash_attention_v2_reference(query, key, value, mask, definition);
 
     if let Err(e) = assert_equals_approx(client, &out, &expected, epsilon) {
         panic!("{}", e);
@@ -27,49 +26,53 @@ pub fn assert_result(
 }
 
 fn attention_epsilon(elems: &AttentionElems, safety_factor: f32) -> f32 {
-    let total_eps = elems.query_global.epsilon()
-        + elems.query_tile.epsilon()
-        + elems.key_global.epsilon()
-        + elems.key_stage.epsilon()
-        + elems.value_global.epsilon()
-        + elems.value_stage.epsilon()
-        + elems.key_value_tile.epsilon()
-        + elems.softmax.epsilon()
-        + elems.accumulator.epsilon()
-        + elems.mask.epsilon()
-        + elems.out_global.epsilon()
-        + elems.out_stage.epsilon();
+    let total_eps = [
+        elems.query_global.epsilon(),
+        elems.query_tile.epsilon(),
+        elems.key_global.epsilon(),
+        elems.key_stage.epsilon(),
+        elems.value_global.epsilon(),
+        elems.value_stage.epsilon(),
+        elems.key_value_tile.epsilon(),
+        elems.softmax.epsilon(),
+        elems.accumulator.epsilon(),
+        elems.mask.epsilon(),
+        elems.out_global.epsilon(),
+        elems.out_stage.epsilon(),
+    ]
+    .into_iter()
+    .fold(0.0, f64::max);
 
     total_eps as f32 * safety_factor
 }
 
-pub(crate) fn flash_attention_v2_cpu(
+pub(crate) fn flash_attention_v2_reference(
     query: &[f32],
     key: &[f32],
     value: &[f32],
     mask: Option<&[bool]>,
-    problem: &AttentionProblem,
+    definition: &AttentionDefinition,
 ) -> Vec<f32>
 where
 {
-    let batch = problem.batch;
-    let seq_q = problem.seq_q;
-    let seq_kv = problem.seq_kv;
-    let num_heads = problem.num_heads;
-    let head_dim = problem.head_dim;
-    let val_dim = problem.val_dim;
+    let batch = definition.dims.batch;
+    let seq_q = definition.dims.seq_q;
+    let seq_kv = definition.dims.seq_kv;
+    let num_heads = definition.dims.num_heads;
+    let head_dim = definition.dims.head_dim;
+    let val_dim = definition.dims.val_dim;
 
     let masked = mask.is_some();
-    assert!(problem.masked == masked);
+    assert!(definition.masked == masked);
 
     // Precompute strides for indexing
-    let query_strides = strides(problem, AttentionIdent::Query);
-    let key_strides = strides(problem, AttentionIdent::Key);
-    let value_strides = strides(problem, AttentionIdent::Value);
-    let mask_strides = strides(problem, AttentionIdent::Mask);
-    let out_strides = strides(problem, AttentionIdent::Out);
+    let query_strides = strides(definition, AttentionIdent::Query);
+    let key_strides = strides(definition, AttentionIdent::Key);
+    let value_strides = strides(definition, AttentionIdent::Value);
+    let mask_strides = strides(definition, AttentionIdent::Mask);
+    let out_strides = strides(definition, AttentionIdent::Out);
 
-    let out_size = problem.shape(AttentionIdent::Out).iter().product();
+    let out_size = definition.shape(AttentionIdent::Out).iter().product();
     let mut out = vec![0.; out_size];
 
     // scaling factor 1/sqrt(head_dim)
@@ -113,7 +116,7 @@ where
                         dot *= scale;
 
                         // Apply mask if applicable
-                        let s_val = if problem.causal && j > i {
+                        let s_val = if definition.options.causal && j > i {
                             // Causal mask
                             f32::NEG_INFINITY
                         } else if masked {
@@ -214,7 +217,7 @@ where
     out
 }
 
-pub(crate) fn strides(problem: &AttentionProblem, ident: AttentionIdent) -> Vec<usize> {
+pub(crate) fn strides(problem: &AttentionDefinition, ident: AttentionIdent) -> Vec<usize> {
     let shape = problem.shape(ident);
 
     let mut strides = vec![0; shape.len()];

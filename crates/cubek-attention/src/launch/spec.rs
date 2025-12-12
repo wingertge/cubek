@@ -1,10 +1,9 @@
 use cubecl::prelude::*;
 use half::{bf16, f16};
 
-use crate::components::{
-    AccumulatorPrecision, AttentionProblem,
+use crate::launch::{
+    AccumulatorPrecision, AttentionGlobalTypes,
     args::{AttentionArgs, TensorArgs},
-    spec::attention_types::*,
 };
 
 /// Attention spec defining each element types used in the computation as well as
@@ -225,9 +224,7 @@ pub type InputRuntimeArg<'a, AA, R> = <InputArg<AA> as LaunchArg>::RuntimeArg<'a
 pub type OutputRuntimeArg<'a, AA, R> = <OutputArg<AA> as LaunchArg>::RuntimeArg<'a, R>;
 
 pub mod attention_types {
-    use crate::components::{
-        AttentionPrecision, AttentionSpec, QueryPrecision, StagedMatrixPrecision,
-    };
+    use crate::launch::{AttentionPrecision, AttentionSpec, QueryPrecision, StagedMatrixPrecision};
 
     pub type QG<AS> =
         <<<AS as AttentionSpec>::Precision as AttentionPrecision>::Query as QueryPrecision>::Global;
@@ -270,43 +267,28 @@ pub struct AttentionElems {
 }
 
 impl AttentionElems {
-    pub fn new<AP: AttentionPrecision>() -> Self {
-        Self {
-            query_global: QG::<AP>::as_type_native_unchecked(),
-            query_tile: QT::<AP>::as_type_native_unchecked(),
-            key_global: KG::<AP>::as_type_native_unchecked(),
-            key_stage: KS::<AP>::as_type_native_unchecked(),
-            value_global: VG::<AP>::as_type_native_unchecked(),
-            value_stage: VS::<AP>::as_type_native_unchecked(),
-            key_value_tile: KVT::<AP>::as_type_native_unchecked(),
-            softmax: SM::<AP>::as_type_native_unchecked(),
-            accumulator: ACC::<AP>::as_type_native_unchecked(),
-            mask: MSK::<AP>::as_type_native_unchecked(),
-            out_global: OG::<AP>::as_type_native_unchecked(),
-            out_stage: OS::<AP>::as_type_native_unchecked(),
-        }
-    }
-
-    pub fn from_problem(problem: &AttentionProblem) -> AttentionElems {
-        let global = problem.global_dtypes.clone();
-        let accumulator = match problem.accumulator_precision {
-            AccumulatorPrecision::Strict(storage_type) => storage_type,
+    pub fn from_global_types(
+        global_dtypes: &AttentionGlobalTypes,
+        accumulator_precision: &AccumulatorPrecision,
+    ) -> AttentionElems {
+        let accumulator = match accumulator_precision {
+            AccumulatorPrecision::Strict(storage_type) => *storage_type,
             AccumulatorPrecision::Loose => AccumulatorPrecision::default_accumulator_type(),
         };
 
         Self {
-            query_global: global.query,
-            query_tile: global.query,
-            key_global: global.key,
-            key_stage: global.key,
-            value_global: global.value,
-            value_stage: global.value,
-            key_value_tile: global.value,
+            query_global: global_dtypes.query,
+            query_tile: global_dtypes.query,
+            key_global: global_dtypes.key,
+            key_stage: global_dtypes.key,
+            value_global: global_dtypes.value,
+            value_stage: global_dtypes.value,
+            key_value_tile: global_dtypes.value,
             softmax: accumulator,
             accumulator,
-            mask: global.mask,
-            out_global: global.out,
-            out_stage: global.out,
+            mask: global_dtypes.mask,
+            out_global: global_dtypes.out,
+            out_stage: global_dtypes.out,
         }
     }
 }
