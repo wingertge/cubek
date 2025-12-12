@@ -20,7 +20,6 @@ use cubek_matmul::{
     MatmulInputHandleRef,
     components::{AvailableLineSizes, MatmulIdent},
 };
-use cubek_std::test_utils::contiguous_strides;
 use cubek_std::test_utils::random_tensor;
 
 use crate::suite::assert_result;

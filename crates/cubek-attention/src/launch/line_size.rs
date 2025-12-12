@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 
 use cubecl::{Runtime, client::ComputeClient, tensor_line_size_parallel};
-use cubek_std::test_utils::contiguous_strides;
+use cubek_std::contiguous_strides;
 
 use crate::launch::{AttentionDefinition, AttentionIdent};
 
