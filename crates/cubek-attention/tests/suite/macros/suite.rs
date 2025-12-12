@@ -47,7 +47,7 @@ fn attention_one_tile_simple() {
         val_dim,
         masked: false,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -200,7 +200,7 @@ fn attention_head_dim_oob() {
         val_dim,
         masked: false,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -251,7 +251,7 @@ fn attention_two_rows_in_array_tile() {
         val_dim,
         masked: false,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -303,7 +303,7 @@ fn attention_one_tile_seqq16() {
         val_dim,
         masked: false,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -354,7 +354,7 @@ fn attention_one_tile_seqq4() {
         val_dim,
         masked: false,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -405,7 +405,7 @@ fn attention_seqq2() {
         val_dim,
         masked: false,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -456,7 +456,7 @@ fn attention_hd2() {
         val_dim,
         masked: false,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -507,7 +507,7 @@ fn attention_kv2() {
         val_dim,
         masked: false,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -558,7 +558,7 @@ fn attention_vd2() {
         val_dim,
         masked: false,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -609,7 +609,7 @@ fn attention_hd2_vd2() {
         val_dim,
         masked: false,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -660,7 +660,7 @@ fn attention_all2() {
         val_dim,
         masked: false,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -711,7 +711,7 @@ fn attention_global_iterations_2() {
         val_dim,
         masked: false,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -762,7 +762,7 @@ fn attention_global_iterations_2_kv2() {
         val_dim,
         masked: false,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -813,7 +813,7 @@ fn attention_partition_kv1_global1_with_oob() {
         val_dim,
         masked: false,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -864,7 +864,7 @@ fn attention_partition_seqq2_global2_kv2_global2() {
         val_dim,
         masked: false,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -915,7 +915,7 @@ fn attention_partition_many_planes() {
         val_dim,
         masked: false,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -966,7 +966,7 @@ fn attention_partition_kv1_global3_with_oob() {
         val_dim,
         masked: false,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -1017,7 +1017,7 @@ fn attention_partition_oob_in_q() {
         val_dim,
         masked: false,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -1068,7 +1068,7 @@ fn attention_partition_kv2_with_oob() {
         val_dim,
         masked: false,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -1119,7 +1119,7 @@ fn attention_partition_kv2_causal() {
         val_dim,
         masked: false,
         causal: true,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -1170,7 +1170,7 @@ fn attention_partition_kv2_masked() {
         val_dim,
         masked: true,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -1221,7 +1221,7 @@ fn attention_stage2() {
         val_dim,
         masked: false,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -1272,7 +1272,7 @@ fn attention_stage4() {
         val_dim,
         masked: false,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -1323,7 +1323,7 @@ fn attention_stage2_problem4() {
         val_dim,
         masked: false,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -1374,7 +1374,7 @@ fn attention_reuse_key_value() {
         val_dim,
         masked: false,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -1426,7 +1426,7 @@ fn attention_double_row_wise() {
         val_dim,
         masked: false,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -1478,7 +1478,7 @@ fn attention_one_tile_masked() {
         val_dim,
         masked: true,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -1529,7 +1529,7 @@ fn attention_one_tile_causal() {
         val_dim,
         masked: false,
         causal: true,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -1580,7 +1580,7 @@ fn attention_one_tile_masked_causal() {
         val_dim,
         masked: true,
         causal: true,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -1631,7 +1631,7 @@ fn attention_masked_oob() {
         val_dim,
         masked: true,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -1682,7 +1682,7 @@ fn attention_masked_larger() {
         val_dim,
         masked: true,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -1733,7 +1733,7 @@ fn attention_num_heads_2() {
         val_dim,
         masked: false,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -1784,7 +1784,7 @@ fn attention_batch_2() {
         val_dim,
         masked: false,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -1835,7 +1835,7 @@ fn attention_batch_2_seqq2() {
         val_dim,
         masked: false,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -1886,7 +1886,7 @@ fn attention_num_heads_2_batch_2() {
         val_dim,
         masked: false,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -1937,7 +1937,7 @@ fn attention_num_heads_2_masked() {
         val_dim,
         masked: true,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -1990,7 +1990,7 @@ fn attention_huge_problem() {
         val_dim,
         masked: false,
         causal: false,
-        global_dtypes: global_dtypes,
+        global_dtypes,
         accumulator_precision: AccumulatorPrecision::default(),
         line_sizes,
     };
@@ -2012,12 +2012,24 @@ fn default_line_sizes(
     val_dim: usize,
 ) -> AttentionLineSizes {
     AvailableLineSizes::from_global_types::<TestRuntime>(client, global_dtypes)
-        .filter(|ls| head_dim % *ls as usize == 0, AttentionIdent::Query)
-        .filter(|ls| head_dim % *ls as usize == 0, AttentionIdent::Key)
-        .filter(|ls| val_dim % *ls as usize == 0, AttentionIdent::Value)
+        .filter(
+            |ls| head_dim.is_multiple_of(*ls as usize),
+            AttentionIdent::Query,
+        )
+        .filter(
+            |ls| head_dim.is_multiple_of(*ls as usize),
+            AttentionIdent::Key,
+        )
+        .filter(
+            |ls| val_dim.is_multiple_of(*ls as usize),
+            AttentionIdent::Value,
+        )
         // Lined mask not always supported
         .filter(|ls| *ls == 1, AttentionIdent::Mask)
-        .filter(|ls| val_dim % *ls as usize == 0, AttentionIdent::Out)
+        .filter(
+            |ls| val_dim.is_multiple_of(*ls as usize),
+            AttentionIdent::Out,
+        )
         .pick_max()
         .unwrap()
 }

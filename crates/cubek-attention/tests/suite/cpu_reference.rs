@@ -173,7 +173,7 @@ where
                     // acc = exp(m - m_new) * acc + Ptilde @ V_block
                     // First scale old accumulator by epm
                     for d in 0..val_dim {
-                        acc_row[d] = epm * acc_row[d];
+                        acc_row[d] *= epm;
                     }
                     // Add Ptilde @ V_block
                     for (bj, j) in (k_block_start..k_block_end).enumerate() {
