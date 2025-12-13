@@ -9,7 +9,6 @@ version.workspace = true
 [features]
 default = ["cubecl/default"]
 std = ["cubecl/std"]
-test-utils = ["cubecl/test-runtime"]
 
 [dependencies]
 cubek-random = { path = "../cubek-random", version = "=0.0.1", default-features = false }

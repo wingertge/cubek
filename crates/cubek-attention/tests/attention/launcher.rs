@@ -6,9 +6,8 @@ use cubek_attention::launch::{
 };
 
 use cubecl::client::ComputeClient;
-use cubek_std::{
-    contiguous_strides,
-    test_utils::{TestMode, current_test_mode, random_bool_tensor, random_tensor},
+use cubek_std::test_utils::{
+    TestMode, contiguous_strides, current_test_mode, random_bool_tensor, random_tensor,
 };
 
 pub fn test_launch(
