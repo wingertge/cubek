@@ -4,8 +4,7 @@ use cubecl::frontend::CubePrimitive;
 use cubecl::prelude::TensorHandleRef;
 use cubecl::std::tensor::TensorHandle;
 use cubek_matmul::MatmulInputHandleRef;
-use cubek_std::contiguous_strides;
-use cubek_std::test_utils::random_tensor;
+use cubek_std::test_utils::{contiguous_strides, random_tensor};
 
 use cubek_matmul::components::{MatmulElems, MatmulIdent, MatmulProblem, MatrixLayout};
 use cubek_matmul::kernels::naive;

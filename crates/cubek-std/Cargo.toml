@@ -20,5 +20,6 @@ half = { workspace = true, features = ["bytemuck"] }
 serde = { workspace = true }
 
 [dev-dependencies]
+cubecl = { workspace = true, features = ["test-runtime"] }
 pretty_assertions = { workspace = true }
 trybuild = "1"
