@@ -1,4 +1,4 @@
-use cubek_matmul::definition::{MatmulProblem, MatrixLayout};
+use cubek_matmul::definition::{MatmulGlobalElems, MatmulProblem, MatrixLayout};
 
 #[derive(Clone, Debug, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ConvolutionOperation {
@@ -37,6 +37,8 @@ pub struct ConvolutionProblem {
     pub operation: ConvolutionOperation,
 
     pub dimensionality: Dimensionality,
+
+    pub global_dtypes: MatmulGlobalElems,
 }
 
 impl ConvolutionProblem {
@@ -81,6 +83,7 @@ impl ConvolutionProblem {
             out_shape: vec![self.m, self.n],
             out_strides: MatrixLayout::RowMajor.to_strides(&[self.m, self.n]),
             out_layout: MatrixLayout::RowMajor,
+            global_dtypes: self.global_dtypes.clone(),
         }
     }
 

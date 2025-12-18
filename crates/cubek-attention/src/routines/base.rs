@@ -8,28 +8,28 @@ use crate::components::{
     batch::BatchAttentionFamily, global::GlobalAttentionFamily, stage::StageAttentionFamily,
 };
 use crate::definition::{
-    AttentionBlueprint, AttentionDefinition, AttentionElems, AttentionLineSizes,
-    AttentionSetupError, CubeCountPlan,
+    AttentionElems, AttentionLineSizes, AttentionProblem, AttentionSetupError, CubeCountPlan,
 };
-use crate::launch::RoutineStrategy;
+use crate::launch::BlueprintStrategy;
 
 pub trait Routine: Debug + Clone {
     type TileAttention: TileAttentionFamily;
     type StageAttention: StageAttentionFamily;
     type GlobalAttention: GlobalAttentionFamily;
-    type BatchAttention: BatchAttentionFamily;
+    type BatchAttention: BatchAttentionFamily<Blueprint = Self::Blueprint>;
 
     type Strategy;
+    type Blueprint;
 
     fn prepare(
-        definition: &AttentionDefinition,
+        problem: &AttentionProblem,
         device_settings: &DeviceSettings,
-        strategy: RoutineStrategy<Self>,
-    ) -> Result<LaunchInfo, AttentionSetupError>;
+        strategy: BlueprintStrategy<Self>,
+    ) -> Result<LaunchInfo<Self::Blueprint>, AttentionSetupError>;
 }
 
-pub struct LaunchInfo {
-    pub blueprint: AttentionBlueprint,
+pub struct LaunchInfo<B> {
+    pub blueprint: B,
     pub dtypes: AttentionElems,
     pub cube_dim: CubeDim,
     pub cube_count_plan: CubeCountPlan,
@@ -41,10 +41,10 @@ pub struct DeviceSettings {
 }
 
 impl DeviceSettings {
-    pub fn new<R: Runtime>(client: &ComputeClient<R>, definition: &AttentionDefinition) -> Self {
+    pub fn new<R: Runtime>(client: &ComputeClient<R>, problem: &AttentionProblem) -> Self {
         DeviceSettings {
             plane_dim: client.properties().hardware.plane_size_max,
-            line_sizes: AttentionLineSizes::new_max(client, definition),
+            line_sizes: AttentionLineSizes::new_max(client, problem),
         }
     }
 }
